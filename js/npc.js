@@ -1,7 +1,4 @@
-// ============================================================
-// NPC SYSTEM - Citizens with Daily Life
-// ============================================================
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 const FIRST_NAMES = ['Budi', 'Siti', 'Agus', 'Dewi', 'Rudi', 'Rina', 'Joko', 'Ani', 'Hadi', 'Maya', 'Fajar', 'Lina'];
 const LAST_NAMES = ['Santoso', 'Wijaya', 'Pratama', 'Sari', 'Kusuma', 'Hartono', 'Lestari', 'Nugroho'];
@@ -12,8 +9,7 @@ class NPC {
   constructor(scene, position, id) {
     this.scene = scene;
     this.id = id;
-    this.name = FIRST_NAMES[Math.floor(Math.random()*FIRST_NAMES.length)] + ' ' + 
-                LAST_NAMES[Math.floor(Math.random()*LAST_NAMES.length)];
+    this.name = FIRST_NAMES[Math.floor(Math.random()*FIRST_NAMES.length)] + ' ' + LAST_NAMES[Math.floor(Math.random()*LAST_NAMES.length)];
     this.job = JOBS[Math.floor(Math.random()*JOBS.length)];
     this.group = new THREE.Group();
     this.group.position.copy(position);
@@ -36,13 +32,11 @@ class NPC {
     const matPants = new THREE.MeshStandardMaterial({ color: isFemale ? 0x3a3a5a : 0x2a2a3a, roughness: 0.7 });
     const matHair = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
 
-    // Torso
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.55, 0.28), matShirt);
     torso.position.y = 1.15;
     torso.castShadow = true;
     this.group.add(torso);
 
-    // Head
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), matSkin);
     head.position.y = 1.58;
     head.scale.y = 1.1;
@@ -53,7 +47,6 @@ class NPC {
     hair.position.y = 1.6;
     this.group.add(hair);
 
-    // Arms
     const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.4, 6);
     this.armL = new THREE.Mesh(armGeo, matShirt);
     this.armL.position.set(-0.28, 1.15, 0);
@@ -62,7 +55,6 @@ class NPC {
     this.armR.position.x = 0.28;
     this.group.add(this.armR);
 
-    // Legs
     const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
     this.legL = new THREE.Mesh(legGeo, matPants);
     this.legL.position.set(-0.12, 0.55, 0);
@@ -71,7 +63,6 @@ class NPC {
     this.legR.position.x = 0.12;
     this.group.add(this.legR);
 
-    // Feet
     const footGeo = new THREE.BoxGeometry(0.13, 0.08, 0.22);
     const matFoot = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
     const footL = new THREE.Mesh(footGeo, matFoot);
@@ -86,22 +77,13 @@ class NPC {
 
   update(delta, isNight) {
     this.timer -= delta;
-
     if (this.timer <= 0) {
-      // choose new state
       const r = Math.random();
-      if (isNight) {
-        this.state = r < 0.7 ? 'idle' : 'walk';
-      } else {
-        this.state = r < 0.4 ? 'walk' : (r < 0.8 ? 'idle' : 'walk');
-      }
+      if (isNight) this.state = r < 0.7 ? 'idle' : 'walk';
+      else this.state = r < 0.4 ? 'walk' : 'idle';
       this.timer = 3 + Math.random() * 5;
       if (this.state === 'walk') {
-        this.target = new THREE.Vector3(
-          (Math.random() - 0.5) * 100,
-          0,
-          (Math.random() - 0.5) * 100
-        );
+        this.target = new THREE.Vector3((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
       }
     }
 
@@ -118,26 +100,20 @@ class NPC {
         this.group.rotation.y += diff * 5 * delta;
         this.group.position.x += dir.x * this.speed * delta;
         this.group.position.z += dir.z * this.speed * delta;
-        // walk animation
         this.walkPhase += delta * 8;
         const swing = Math.sin(this.walkPhase) * 0.5;
         this.armL.rotation.x = swing;
         this.armR.rotation.x = -swing;
         this.legL.rotation.x = -swing;
         this.legR.rotation.x = swing;
-      } else {
-        this.state = 'idle';
-      }
+      } else this.state = 'idle';
     } else {
-      // idle
       this.walkPhase += delta * 2;
       this.armL.rotation.x *= 0.9;
       this.armR.rotation.x *= 0.9;
       this.legL.rotation.x *= 0.9;
       this.legR.rotation.x *= 0.9;
     }
-
-    // Bounds
     const lim = 250;
     this.group.position.x = Math.max(-lim, Math.min(lim, this.group.position.x));
     this.group.position.z = Math.max(-lim, Math.min(lim, this.group.position.z));
@@ -162,8 +138,6 @@ export class NPCManager {
   }
 
   update(delta, isNight) {
-    for (const n of this.npcs) {
-      n.update(delta, isNight);
-    }
+    for (const n of this.npcs) n.update(delta, isNight);
   }
-}
+                                                       }
