@@ -1,7 +1,4 @@
-// ============================================================
-// WORLD - Build the open world city
-// ============================================================
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import {
   createPalace, createMosque, createHospital, createSchool,
   createSkyscraper, createHouse, createRoad, createTree, createStreetlight
@@ -17,14 +14,12 @@ export class World {
   }
 
   build() {
-    // Ground
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x3a5a3a, roughness: 0.95 });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
 
-    // Plaza in front of palace (paved)
     const plaza = new THREE.Mesh(
       new THREE.CircleGeometry(60, 32),
       new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.8 })
@@ -34,22 +29,18 @@ export class World {
     plaza.receiveShadow = true;
     this.scene.add(plaza);
 
-    // === PALACE ===
     const palace = createPalace();
     palace.position.set(0, 0, 0);
     this.scene.add(palace);
     this.addBuilding(palace, 'palace', 'Istana Presiden', 22, '#ffd700');
 
-    // === ROADS (cross pattern) ===
     this.buildRoadGrid();
 
-    // === MOSQUE (north) ===
     const mosque = createMosque();
     mosque.position.set(0, 0, -90);
     this.scene.add(mosque);
     this.addBuilding(mosque, 'mosque', 'Masjid Raya', 20, '#22aa55');
 
-    // Small mosques
     for (let i = 0; i < 3; i++) {
       const m = createMosque();
       m.scale.set(0.4, 0.4, 0.4);
@@ -58,26 +49,22 @@ export class World {
       this.addBuilding(m, 'mosque', 'Masjid Kecil', 8, '#22aa55');
     }
 
-    // === HOSPITAL (east) ===
     const hospital = createHospital();
     hospital.position.set(110, 0, -20);
     this.scene.add(hospital);
     this.addBuilding(hospital, 'hospital', 'Rumah Sakit', 18, '#ff4444');
 
-    // === SCHOOL (south) ===
     const school = createSchool();
     school.position.set(0, 0, 100);
     this.scene.add(school);
     this.addBuilding(school, 'school', 'Sekolah', 15, '#ffaa22');
 
-    // === UNIVERSITY ===
     const uni = createSchool();
     uni.scale.set(1.6, 1.6, 1.6);
     uni.position.set(-120, 0, 80);
     this.scene.add(uni);
     this.addBuilding(uni, 'university', 'Universitas', 22, '#aa44ff');
 
-    // === SKYSCRAPERS (downtown - west) ===
     const skyPositions = [
       [-150, -150], [-130, -120], [-180, -100], [-160, -160], [-110, -140],
       [-140, -180], [-100, -110], [-170, -140], [-200, -160], [-130, -180]
@@ -91,7 +78,6 @@ export class World {
       this.addBuilding(sk, 'skyscraper', 'Gedung', 14, '#6688aa');
     }
 
-    // === HOUSES (neighborhoods) ===
     for (let i = 0; i < 40; i++) {
       const angle = (i / 40) * Math.PI * 2;
       const radius = 120 + Math.random() * 80;
@@ -104,7 +90,6 @@ export class World {
       this.addBuilding(house, 'house', 'Rumah', 6, '#aa8866');
     }
 
-    // === MORE HOUSES in rows ===
     for (let x = -60; x <= 60; x += 20) {
       for (let z = 140; z <= 200; z += 20) {
         if (Math.random() < 0.6) {
@@ -117,17 +102,15 @@ export class World {
       }
     }
 
-    // === MARKET/MALL ===
     const mall = createSkyscraper(20, 15, 0xcc8844);
     mall.position.set(80, 0, 60);
     this.scene.add(mall);
     this.addBuilding(mall, 'mall', 'Pusat Perbelanjaan', 18, '#ffaa44');
 
-    // === TREES ===
     for (let i = 0; i < 60; i++) {
       const x = (Math.random() - 0.5) * 400;
       const z = (Math.random() - 0.5) * 400;
-      if (Math.abs(x) < 30 && Math.abs(z) < 30) continue; // not on plaza
+      if (Math.abs(x) < 30 && Math.abs(z) < 30) continue;
       const t = createTree();
       t.position.set(x, 0, z);
       t.scale.setScalar(0.8 + Math.random() * 0.5);
@@ -135,7 +118,6 @@ export class World {
       this.trees.push(t);
     }
 
-    // === STREETLIGHTS ===
     for (let z = -200; z <= 200; z += 25) {
       for (const x of [-12, 12]) {
         const sl = createStreetlight();
@@ -145,7 +127,6 @@ export class World {
       }
     }
 
-    // === TREES around palace ===
     for (let i = 0; i < 16; i++) {
       const angle = (i / 16) * Math.PI * 2;
       const r = 45;
@@ -157,10 +138,6 @@ export class World {
   }
 
   buildRoadGrid() {
-    const main = createRoad(12, 400);
-    main.rotation.y = Math.PI / 2;
-    main.position.set(0, 0.03, 0);
-    // Actually make two perpendicular roads
     const roadNS = createRoad(12, 400);
     roadNS.position.set(0, 0.03, 0);
     this.scene.add(roadNS);
@@ -172,7 +149,6 @@ export class World {
     roadEW.position.set(0, 0.03, 0);
     this.scene.add(roadEW);
 
-    // Secondary roads
     for (const z of [-60, 60, -140, 140]) {
       const r = createRoad(8, 300);
       r.rotation.y = Math.PI / 2;
@@ -189,21 +165,13 @@ export class World {
   }
 
   addBuilding(group, type, name, radius = 10, minimapColor = '#ffd700') {
-    this.buildings.push({
-      group,
-      type,
-      name,
-      radius,
-      minimapColor
-    });
+    this.buildings.push({ group, type, name, radius, minimapColor });
   }
 
   setStreetlightsOn(on) {
     for (const sl of this.streetlights) {
       const lamp = sl.userData.lamp;
-      if (lamp) {
-        lamp.material.emissiveIntensity = on ? 1.2 : 0.1;
-      }
+      if (lamp) lamp.material.emissiveIntensity = on ? 1.2 : 0.1;
     }
   }
-                                                          }
+  }
