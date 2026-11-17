@@ -2,171 +2,239 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="theme-color" content="#0a1420">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>President Life Simulator 3D</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 
-<div id="game"></div>
-
-<!-- LOADING -->
-<div id="loading" class="overlay show">
-  <div>
-    <div class="load-logo">🏛️</div>
-    <h1>PRESIDENT LIFE SIMULATOR 3D</h1>
-    <div class="spinner"></div>
-    <p id="loadText">Membangun dunia...</p>
-  </div>
-</div>
-
-<!-- MAIN MENU -->
-<div id="mainMenu" class="overlay">
-  <div class="menu-box">
-    <div class="load-logo">🏛️</div>
-    <h1>PRESIDENT LIFE<br>SIMULATOR 3D</h1>
-    <p class="tagline">Jalani hidup sebagai Presiden. Bangun negaramu.</p>
-    <button class="btn-primary" id="btnNewGame">🆕 NEGARA BARU</button>
-    <button class="btn-secondary" id="btnContinue">💾 LANJUTKAN</button>
-    <div class="version">v3.0 • Open World Edition</div>
-  </div>
-</div>
-
-<!-- NATION CREATOR -->
-<div id="nationCreator" class="overlay">
-  <div class="creator-box">
-    <div class="creator-header">
-      <h2>🇺🇳 BUAT NEGARA BARU</h2>
-      <p>Rancang identitas negara dan profil presiden Anda</p>
+<!-- ============ MAIN MENU ============ -->
+<div id="main-menu" class="screen active">
+  <div class="menu-bg"></div>
+  <div class="menu-content">
+    <h1 class="game-title">PRESIDENT LIFE<br><span>SIMULATOR 3D</span></h1>
+    <p class="game-subtitle">Realistic Open World Country & President Life Simulation</p>
+    <div class="menu-buttons">
+      <button id="btn-new-game" class="btn btn-primary">🇺🇳 NEW GAME - Bangun Negara</button>
+      <button id="btn-continue" class="btn btn-secondary">▶ CONTINUE</button>
+      <button id="btn-settings" class="btn btn-secondary">⚙ PENGATURAN</button>
     </div>
-    <div class="creator-body">
+    <div class="menu-footer">v1.0 · Dibuat dengan Three.js</div>
+  </div>
+</div>
+
+<!-- ============ COUNTRY CREATION ============ -->
+<div id="country-creation" class="screen">
+  <div class="creation-panel">
+    <h2>🏛 PEMBUATAN NEGARA</h2>
+    <p class="subtitle">Buat negara impianmu dan jadilah presidennya</p>
+
+    <div class="form-grid">
       <div class="form-section">
-        <h3>📋 Identitas Negara</h3>
-        <div class="field"><label>Nama Negara</label><input id="c_nationName" value="Nusantara Raya" maxlength="24"></div>
-        <div class="field"><label>Nama Ibu Kota</label><input id="c_capital" value="Kartapura" maxlength="24"></div>
-        <div class="field"><label>Mata Uang</label><input id="c_currency" value="Rupiah Emas" maxlength="20"></div>
-        <div class="field"><label>Bahasa Nasional</label><input id="c_language" value="Bahasa Indonesia" maxlength="20"></div>
-        <div class="field"><label>Populasi Awal</label>
-          <select id="c_population">
-            <option value="50000">50.000</option>
-            <option value="100000" selected>100.000</option>
-            <option value="500000">500.000</option>
-            <option value="1000000">1.000.000</option>
-          </select>
-        </div>
-        <div class="field"><label>Sistem Pemerintahan</label>
-          <select id="c_gov">
-            <option>Republik Presidensial</option>
-            <option>Republik Federal</option>
-            <option>Monarki Konstitusional</option>
-            <option>Demokrasi Liberal</option>
-          </select>
-        </div>
-        <div class="field"><label>Ekonomi Awal</label>
-          <select id="c_economy">
-            <option value="developing">Berkembang</option>
-            <option value="stable" selected>Stabil</option>
-            <option value="advanced">Maju</option>
-          </select>
-        </div>
-        <div class="field"><label>Warna Bendera</label>
-          <div class="flag-colors">
-            <input type="color" id="c_flag1" value="#cc0000">
-            <input type="color" id="c_flag2" value="#ffffff">
-            <input type="color" id="c_flag3" value="#0000cc">
+        <h3>Data Negara</h3>
+        <label>Nama Negara</label>
+        <input id="in-country-name" type="text" value="Nusantara Raya" maxlength="20">
+        
+        <label>Nama Ibu Kota</label>
+        <input id="in-capital" type="text" value="Kartika Utama" maxlength="20">
+        
+        <label>Mata Uang</label>
+        <select id="in-currency">
+          <option value="IDR">Rupiah (IDR)</option>
+          <option value="USD">Dollar (USD)</option>
+          <option value="EUR">Euro (EUR)</option>
+          <option value="MYR">Ringgit (MYR)</option>
+        </select>
+        
+        <label>Bahasa Negara</label>
+        <select id="in-language">
+          <option value="Indonesia">Indonesia</option>
+          <option value="English">English</option>
+          <option value="Melayu">Melayu</option>
+        </select>
+        
+        <label>Sistem Pemerintahan</label>
+        <select id="in-system">
+          <option value="Republik Presidensial">Republik Presidensial</option>
+          <option value="Republik Parlementer">Republik Parlementer</option>
+          <option value="Monarki Konstitusional">Monarki Konstitusional</option>
+        </select>
+        
+        <label>Populasi Awal</label>
+        <input id="in-population" type="number" value="500000" min="10000" max="10000000" step="1000">
+        
+        <label>Tingkat Ekonomi Awal</label>
+        <select id="in-economy">
+          <option value="Berkembang">Berkembang</option>
+          <option value="Menengah">Menengah</option>
+          <option value="Maju">Maju</option>
+        </select>
+      </div>
+
+      <div class="form-section">
+        <h3>Data Presiden</h3>
+        <label>Nama Presiden</label>
+        <input id="in-president-name" type="text" value="Ir. Bima Sakti" maxlength="20">
+        
+        <label>Karakter Presiden</label>
+        <div class="char-options">
+          <div class="char-option active" data-char="male_suit">
+            <div class="char-preview">👨‍💼</div>
+            <span>Pria Formal</span>
           </div>
+          <div class="char-option" data-char="female_suit">
+            <div class="char-preview">👩‍💼</div>
+            <span>Wanita Formal</span>
+          </div>
+        </div>
+
+        <label>Pakaian</label>
+        <select id="in-outfit">
+          <option value="suit_black">Jas Hitam Presidensial</option>
+          <option value="suit_blue">Jas Biru Formal</option>
+          <option value="casual">Pakaian Santai</option>
+          <option value="kunjungan">Pakaian Kunjungan Kerja</option>
+        </select>
+
+        <label>Warna Bendera</label>
+        <div class="flag-colors">
+          <input type="color" id="in-flag1" value="#e63946">
+          <input type="color" id="in-flag2" value="#ffffff">
+          <div class="flag-preview" id="flag-preview"></div>
         </div>
       </div>
-      <div class="form-section">
-        <h3>👔 Profil Presiden</h3>
-        <div class="field"><label>Nama Presiden</label><input id="c_president" value="Ir. Soekarno" maxlength="30"></div>
-        <div class="field"><label>Karakter</label>
-          <div class="char-picker" id="charPicker">
-            <div class="char-opt selected" data-skin="#ddb08a" data-body="m">👨🏻 Laki-laki</div>
-            <div class="char-opt" data-skin="#c89878" data-body="m">👨🏽 Laki-laki</div>
-            <div class="char-opt" data-skin="#e0bb90" data-body="f">👩🏻 Perempuan</div>
-            <div class="char-opt" data-skin="#a87a55" data-body="m">👨🏾 Laki-laki</div>
-          </div>
-        </div>
-        <div class="field"><label>Pakaian Presiden</label>
-          <div class="outfit-picker" id="outfitPicker">
-            <div class="outfit-opt selected" data-color="#1a1a2e" data-accent="#ffd700">Jas Resmi</div>
-            <div class="outfit-opt" data-color="#2c2c2c" data-accent="#cc0000">Jas Formal</div>
-            <div class="outfit-opt" data-color="#f5f5f5" data-accent="#1a1a2e">Kemeja Putih</div>
-            <div class="outfit-opt" data-color="#4a7c59" data-accent="#dddddd">Kunjungan Kerja</div>
-          </div>
-        </div>
-        <div style="background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);border-radius:8px;padding:9px;font-size:10px;color:#8fb8ff;line-height:1.5;margin-top:10px">
-          <b>ℹ️ Info:</b> Semua data tersimpan otomatis. Anda bisa melanjutkan kapan saja.
-        </div>
+    </div>
+
+    <div class="creation-actions">
+      <button id="btn-back-menu" class="btn btn-secondary">← Kembali</button>
+      <button id="btn-start-game" class="btn btn-primary">🚀 MULAI MEMERINTAH</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOADING SCREEN ============ -->
+<div id="loading-screen" class="screen">
+  <div class="loading-content">
+    <h1>MEMUAT DUNIA...</h1>
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    <p id="loading-text">Menyiapkan istana presiden...</p>
+  </div>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="game-screen" class="screen">
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="hud-top">
+      <div class="hud-panel">
+        <div class="hud-item"><span class="hud-icon">🏛</span><span id="hud-country">Nusantara</span></div>
+        <div class="hud-item"><span class="hud-icon">💰</span><span id="hud-money">Rp 0</span></div>
+        <div class="hud-item"><span class="hud-icon">👥</span><span id="hud-pop">0</span></div>
+        <div class="hud-item"><span class="hud-icon">😊</span><span id="hud-approval">75%</span></div>
+      </div>
+      <div class="hud-panel hud-right">
+        <div class="hud-item"><span id="hud-time">06:00</span></div>
+        <div class="hud-item"><span id="hud-day">Hari 1</span></div>
+        <div class="hud-item"><span id="hud-weather">☀️</span></div>
       </div>
     </div>
-    <div class="creator-footer">
-      <button class="btn-ghost" id="btnCancelCreate">← Kembali</button>
-      <button class="btn-primary" id="btnStartNation">🚀 RESMIKAN NEGARA</button>
+
+    <div id="hud-left">
+      <button class="hud-btn" id="btn-dashboard" title="Dashboard">📊</button>
+      <button class="hud-btn" id="btn-map" title="Peta">🗺</button>
+      <button class="hud-btn" id="btn-missions" title="Misi">🎯</button>
+      <button class="hud-btn" id="btn-government" title="Pemerintahan">🏛</button>
+      <button class="hud-btn" id="btn-economy" title="Ekonomi">💹</button>
+      <button class="hud-btn" id="btn-save" title="Simpan">💾</button>
+      <button class="hud-btn" id="btn-menu" title="Menu">⚙</button>
+    </div>
+
+    <div id="hud-bottom-right">
+      <div id="minimap">
+        <canvas id="minimap-canvas" width="180" height="180"></canvas>
+      </div>
+    </div>
+
+    <div id="interaction-prompt" class="hidden">
+      <div class="prompt-key">E</div>
+      <div class="prompt-text">Interaksi</div>
+    </div>
+
+    <div id="speed-control">
+      <label>Kecepatan Waktu:</label>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="60">60x</button>
+      <button class="speed-btn" data-speed="600">600x</button>
+    </div>
+  </div>
+
+  <!-- MOBILE CONTROLS -->
+  <div id="mobile-controls">
+    <div id="joystick-zone">
+      <div id="joystick-base"><div id="joystick-knob"></div></div>
+    </div>
+    <div id="mobile-actions">
+      <button class="action-btn" id="btn-run">🏃</button>
+      <button class="action-btn" id="btn-interact">🖐</button>
+      <button class="action-btn" id="btn-enter-vehicle">🚗</button>
+    </div>
+  </div>
+
+  <!-- DESKTOP HINT -->
+  <div id="desktop-hint">
+    <span>WASD: Bergerak · Shift: Lari · E: Interaksi · F: Kendaraan · C: Kamera · Mouse: Lihat</span>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div id="modal-overlay" class="hidden">
+  <div id="modal-content"></div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settings-modal" class="screen">
+  <div class="modal-box">
+    <h2>⚙ Pengaturan</h2>
+    <div class="setting-row">
+      <label>Volume Suara</label>
+      <input type="range" id="set-volume" min="0" max="100" value="70">
+    </div>
+    <div class="setting-row">
+      <label>Kualitas Grafis</label>
+      <select id="set-quality">
+        <option value="low">Rendah (HP Lama)</option>
+        <option value="medium" selected>Sedang</option>
+        <option value="high">Tinggi</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <label>Kecepatan Waktu (Default)</label>
+      <select id="set-time-speed">
+        <option value="1" selected>Real-time (1:1)</option>
+        <option value="60">Cepat (60x)</option>
+        <option value="600">Sangat Cepat (600x)</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <label>Musik Latar</label>
+      <input type="checkbox" id="set-music" checked>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-close-settings" class="btn btn-primary">Tutup</button>
     </div>
   </div>
 </div>
 
-<!-- HUD -->
-<div id="hud" class="hud">
-  <div class="hud-top">
-    <div class="hud-group">
-      <div class="stat-pill"><span>💰</span><span id="hudCash">-</span></div>
-      <div class="stat-pill"><span>👥</span><span id="hudPop">-</span></div>
-      <div class="stat-pill"><span>📈</span><span id="hudApprove">-</span></div>
-    </div>
-    <div class="hud-time">
-      <div id="hudClock" class="clock">--:--</div>
-      <div id="hudDay" class="day">--</div>
-      <div id="hudWeather" class="weather">☀️</div>
-    </div>
-  </div>
-</div>
-
-<div id="minimapBox"><canvas id="minimap" width="200" height="200"></canvas></div>
-
-<div id="bottomNav" class="bottom-nav">
-  <button class="nav-btn" data-panel="gov"><span>🏛️</span><small>Pemerintah</small></button>
-  <button class="nav-btn" data-panel="econ"><span>💵</span><small>Ekonomi</small></button>
-  <button class="nav-btn" data-panel="prop"><span>🏠</span><small>Properti</small></button>
-  <button class="nav-btn" data-panel="veh"><span>🚗</span><small>Kendaraan</small></button>
-  <button class="nav-btn" data-panel="social"><span>🌍</span><small>Warga</small></button>
-  <button class="nav-btn" data-panel="mission"><span>🎯</span><small>Misi</small></button>
-  <button class="nav-btn" data-panel="settings"><span>⚙️</span><small>Menu</small></button>
-</div>
-
-<div id="joystickZone">
-  <div id="joystick"><div id="joystickKnob"></div></div>
-</div>
-
-<div id="actionBar" class="action-bar">
-  <button class="act-btn act-run" id="btnRun" title="Lari">🏃</button>
-  <button class="act-btn act-interact" id="btnInteract" title="Interaksi">✋</button>
-  <button class="act-btn act-vehicle" id="btnVehicle" title="Kendaraan">🚪</button>
-  <button class="act-btn act-camera" id="btnCamera" title="Kamera">📷</button>
-</div>
-
-<div id="interactPrompt" class="interact-prompt"></div>
-<div id="toast" class="toast"></div>
-
-<div id="panelModal" class="panel-modal">
-  <div class="panel-content" id="panelContent"></div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="js/world.js"></script>
-<script src="js/character.js"></script>
-<script src="js/player.js"></script>
-<script src="js/vehicles.js"></script>
-<script src="js/buildings.js"></script>
-<script src="js/palace.js"></script>
-<script src="js/npc.js"></script>
-<script src="js/economy.js"></script>
-<script src="js/government.js"></script>
-<script src="js/save.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
-  </html>
+</html>
