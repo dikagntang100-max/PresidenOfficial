@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>President Life Simulator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; background: #000; color: #fff; }
+  #game { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  /* ============ UI OVERLAY ============ */
+  .ui { position: fixed; pointer-events: none; z-index: 10; }
+  .ui > * { pointer-events: auto; }
+
+  /* Top HUD */
+  #topBar {
+    top: 0; left: 0; right: 0; padding: 10px 14px;
+    display: flex; gap: 10px; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(0,0,0,0.75), transparent);
+    flex-wrap: wrap;
+  }
+  .stat {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(15,25,45,0.85); backdrop-filter: blur(10px);
+    padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,215,0,0.25);
+  }
+  .stat .ic { font-size: 14px; }
+  .stat .val { color: #ffd700; }
+
+  /* Clock */
+  #clockBox { font-size: 12px; text-align: right; line-height: 1.3; }
+
+  /* Bottom Nav */
+  #bottomNav {
+    bottom: 0; left: 0; right: 0; padding: 8px;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9), transparent);
+  }
+  .navBtn {
+    background: rgba(15,25,45,0.9); border: 1px solid rgba(255,215,0,0.3);
+    color: #fff; padding: 8px 4px; border-radius: 10px; font-size: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; transition: all 0.15s; font-weight: 600;
+  }
+  .navBtn:active, .navBtn.active { background: rgba(255,215,0,0.3); transform: scale(0.96); }
+  .navBtn .ic { font-size: 16px; }
+
+  /* Joystick */
+  #joystick {
+    bottom: 90px; left: 20px; width: 110px; height: 110px;
+    background: rgba(0,0,0,0.4); border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25); display: none;
+    touch-action: none;
+  }
+  #joystickKnob {
+    width: 50px; height: 50px; background: rgba(255,215,0,0.6);
+    border-radius: 50%; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%); pointer-events: none;
+    box-shadow: 0 0 20px rgba(255,215,0,0.5);
+  }
+
+  /* Action Buttons */
+  #actionBtns {
+    bottom: 90px; right: 20px; display: none; flex-direction: column; gap: 10px;
+  }
+  .actBtn {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(255,215,0,0.85); color: #000; border: none;
+    font-size: 22px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-weight: bold;
+  }
+  .actBtn:active { transform: scale(0.92); }
+
+  /* Modal */
+  .modal {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; padding: 12px;
+    overflow-y: auto;
+  }
+  .modal.show { display: flex; }
+  .panel {
+    background: linear-gradient(145deg, #0f1b2e, #1a2a44);
+    border: 1px solid rgba(255,215,0,0.35);
+    border-radius: 16px; padding: 18px; width: 100%; max-width: 560px;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .panel h2 {
+    color: #ffd700; font-size: 20px; margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255,215,0,0.2); padding-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel h3 { color: #7fd6ff; font-size: 14px; margin: 14px 0 8px; }
+  .panel p { font-size: 13px; line-height: 1.5; color: #cdd6e0; }
+  .closeBtn {
+    background: rgba(255,80,80,0.2); border: 1px solid rgba(255,80,80,0.5);
+    color: #ff8080; border-radius: 8px; padding: 4px 10px;
+    cursor: pointer; font-size: 16px; font-weight: bold;
+  }
+
+  /* Generic Buttons */
+  .btn {
+    background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000;
+    border: none; padding: 10px 16px; border-radius: 10px;
+    font-weight: 700; cursor: pointer; font-size: 13px;
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn.sec {
+    background: rgba(100,150,255,0.2); color: #8fb8ff;
+    border: 1px solid rgba(100,150,255,0.4);
+  }
+  .btn.danger { background: linear-gradient(135deg, #ff5555, #cc0000); color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 10px; font-size: 12px;
+  }
+  .card .lbl { color: #8fa0b5; font-size: 10px; text-transform: uppercase; }
+  .card .v { color: #ffd700; font-weight: 700; font-size: 15px; margin-top: 2px; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
+  .row:last-child { border-bottom: none; }
+
+  input, select {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4); color: #fff; font-size: 13px; margin-top: 4px;
+    font-family: inherit;
+  }
+  label { font-size: 11px; color: #8fa0b5; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field { margin-bottom: 10px; }
+
+  /* Notification */
+  #notif {
+    top: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(20,30,50,0.95); border: 1px solid rgba(255,215,0,0.4);
+    padding: 10px 20px; border-radius: 10px; font-size: 13px;
+    opacity: 0; transition: opacity 0.3s; max-width: 90vw; text-align: center;
+  }
+  #notif.show { opacity: 1; }
+
+  /* Minimap */
+  #minimap {
+    top: 70px; right: 12px; width: 110px; height: 110px;
+    border-radius: 10px; border: 2px solid rgba(255,215,0,0.4);
+    background: rgba(0,0,0,0.6); overflow: hidden;
+  }
+  #minimapCanvas { width: 100%; height: 100%; }
+
+  /* Loading */
+  #loading {
+    position: fixed; inset: 0; background: #050a15; z-index: 1000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px;
+  }
+  #loading h1 { color: #ffd700; font-size: 24px; text-align: center; }
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid rgba(255,215,0,0.2);
+    border-top-color: #ffd700; border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Setup Screen */
+  #setup { overflow-y: auto; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .stat { font-size: 10px; padding: 4px 8px; }
+    .stat .ic { font-size: 12px; }
+    #minimap { width: 85px; height: 85px; }
+    .navBtn { font-size: 9px; padding: 6px 2px; }
+    .navBtn .ic { font-size: 14px; }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #joystick { display: none !important; }
+    #actionBtns { display: flex !important; }
+  }
+  @media (hover: none) and (pointer: coarse) {
+    #joystick { display: block; }
+    #actionBtns { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game"></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <h1>🏛️ PRESIDENT LIFE SIMULATOR</h1>
+  <div class="spinner"></div>
+  <p style="color:#8fa0b5;font-size:13px">Memuat dunia...</p>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup" class="modal show">
+  <div class="panel" style="max-width:480px">
+    <h2>🇺🇳 Buat Negara Anda</h2>
+    <div class="field"><label>Nama Negara</label><input id="s_name" value="Nusantara Raya" maxlength="24"></div>
+    <div class="field"><label>Nama Ibu Kota</label><input id="s_capital" value="Kartapura" maxlength="24"></div>
+    <div class="field"><label>Mata Uang</label><input id="s_currency" value="Rupiah Emas (RE)" maxlength="20"></div>
+    <div class="field"><label>Populasi Awal</label>
+      <select id="s_pop">
+        <option value="50000">50.000</option>
+        <option value="100000" selected>100.000</option>
+        <option value="500000">500.000</option>
+        <option value="1000000">1.000.000</option>
+      </select>
+    </div>
+    <div class="field"><label>Sistem Pemerintahan</label>
+      <select id="s_gov">
+        <option value="Republik Presidensial">Republik Presidensial</option>
+        <option value="Republik Federal">Republik Federal</option>
+        <option value="Monarki Konstitusional">Monarki Konstitusional</option>
+        <option value="Demokrasi Liberal">Demokrasi Liberal</option>
+      </select>
+    </div>
+    <div class="field"><label>Warna Bendera</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <input type="color" id="s_f1" value="#ff0000" style="height:36px;padding:0">
+        <input type="color" id="s_f2" value="#ffffff" style="height:36px;padding:0">
+        <input type="color" id="s_f3" value="#0000ff" style="height:36px;padding:0">
+      </div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px;font-size:15px;padding:14px" id="startBtn">
+      🚀 MULAI KEPRESIDENAN
+    </button>
+    <button class="btn sec" style="width:100%;margin-top:8px" id="loadSaveBtn">
+      💾 Lanjutkan Save (jika ada)
+    </button>
+  </div>
+</div>
+
+<!-- TOP HUD -->
+<div id="topBar" class="ui" style="display:none">
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <div class="stat"><span class="ic">💰</span><span>Kas:</span><span class="val" id="hud_cash">-</span></div>
+    <div class="stat"><span class="ic">👥</span><span>Pop:</span><span class="val" id="hud_pop">-</span></div>
+    <div class="stat"><span class="ic">😊</span><span>Approval:</span><span class="val" id="hud_app">-</span></div>
+    <div class="stat"><span class="ic">📉</span><span>Pengangguran:</span><span class="val" id="hud_unemp">-</span></div>
+  </div>
+  <div id="clockBox">
+    <div style="color:#ffd700;font-weight:700" id="hud_clock">Senin, 06:00</div>
+    <div style="color:#8fa0b5;font-size:10px" id="hud_weather">☀️ Cerah</div>
+  </div>
+</div>
+
+<!-- MINIMAP -->
+<div id="minimap" class="ui" style="display:none">
+  <canvas id="minimapCanvas" width="220" height="220"></canvas>
+</div>
+
+<!-- BOTTOM NAV -->
+<div id="bottomNav" class="ui" style="display:none">
+  <div class="navBtn" data-menu="gov"><span class="ic">🏛️</span><span>Pemerintah</span></div>
+  <div class="navBtn" data-menu="fin"><span class="ic">💵</span><span>Keuangan</span></div>
+  <div class="navBtn" data-menu="prop"><span class="ic">🏠</span><span>Properti</span></div>
+  <div class="navBtn" data-menu="veh"><span class="ic">🚗</span><span>Kendaraan</span></div>
+  <div class="navBtn" data-menu="soc"><span class="ic">🌍</span><span>Warga</span></div>
+  <div class="navBtn" data-menu="set"><span class="ic">⚙️</span><span>Setting</span></div>
+</div>
+
+<!-- JOYSTICK -->
+<div id="joystick" class="ui">
+  <div id="joystickKnob"></div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div id="actionBtns" class="ui">
+  <button class="actBtn" id="btnInteract" title="Interaksi">✋</button>
+  <button class="actBtn" id="btnEnter" title="Masuk Kendaraan">🚪</button>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notif" class="ui"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal" class="modal">
+  <div class="panel" id="modalPanel"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+   PRESIDENT LIFE SIMULATOR - GAME ENGINE
+   ============================================================ */
+
+// ============ GAME STATE ============
+const G = {
+  country: null,
+  player: { x: 0, y: 0, z: 0, rotY: 0, speed: 8, inVehicle: null },
+  economy: { cash: 5000000, income: 0, expense: 0, taxRate: 15, budget: 3000000, inflation: 3, unemployment: 8, gdp: 50000000 },
+  approval: 65,
+  time: { day: 1, hour: 6, minute: 0, weather: 'cerah', dayName: 'Senin' },
+  cabinet: [],
+  laws: [],
+  properties: [],
+  vehicles: [],
+  npcs: [],
+  buildings: [],
+  missions: [],
+  camera: { yaw: 0, pitch: 0.3, dist: 12 },
+  keys: {},
+  joystick: { x: 0, y: 0, active: false },
+  autosaveTimer: 0,
+  suspended: false,
+};
+
+const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+// ============ THREE.JS SETUP ============
+let scene, camera, renderer, clock;
+let worldGroup, playerMesh, npcGroup, vehicleGroup, buildingsGroup;
+let miniCtx;
+
+function initThree() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
+  scene.fog = new THREE.Fog(0x87ceeb, 120, 400);
+
+  camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 2000);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.getElementById('game').appendChild(renderer.domElement);
+
+  clock = new THREE.Clock();
+
+  // Lights
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x444466, 0.7);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(50, 80, 30);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.left = -100; sun.shadow.camera.right = 100;
+  sun.shadow.camera.top = 100; sun.shadow.camera.bottom = -100;
+  scene.add(sun);
+  scene.userData.sun = sun;
+  scene.userData.hemi = hemi;
+
+  // World groups
+  worldGroup = new THREE.Group(); scene.add(worldGroup);
+  buildingsGroup = new THREE.Group(); scene.add(buildingsGroup);
+  npcGroup = new THREE.Group(); scene.add(npcGroup);
+  vehicleGroup = new THREE.Group(); scene.add(vehicleGroup);
+
+  // Ground
+  buildWorld();
+
+  // Player
+  buildPlayer();
+
+  // Camera init
+  updateCamera(0);
+
+  miniCtx = document.getElementById('minimapCanvas').getContext('2d');
+
+  addEventListener('resize', onResize);
+}
+
+function onResize() {
+  if (!camera || !renderer) return;
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+
+// ============ WORLD BUILDING ============
+function buildWorld() {
+  // Ground grass
+  const groundGeo = new THREE.PlaneGeometry(1000, 1000, 1, 1);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x3a7d3a });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  worldGroup.add(ground);
+
+  // Roads (cross pattern + ring)
+  const roadMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+  // Main N-S road
+  const roadNS = new THREE.Mesh(new THREE.PlaneGeometry(16, 400), roadMat);
+  roadNS.rotation.x = -Math.PI/2; roadNS.position.y = 0.02; roadNS.receiveShadow = true;
+  worldGroup.add(roadNS);
+  // Main E-W road
+  const roadEW = new THREE.Mesh(new THREE.PlaneGeometry(400, 16), roadMat);
+  roadEW.rotation.x = -Math.PI/2; roadEW.position.y = 0.02; roadEW.receiveShadow = true;
+  worldGroup.add(roadEW);
+
+  // Ring road (perimeter)
+  const ringMat = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
+  const ring = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), ringMat);
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.01;
+  worldGroup.add(ring);
+  const ringInner = new THREE.Mesh(new THREE.PlaneGeometry(280, 280), new THREE.MeshLambertMaterial({color:0x3a7d3a}));
+  ringInner.rotation.x = -Math.PI/2; ringInner.position.y = 0.015;
+  worldGroup.add(ringInner);
+
+  // Roads dashed lines
+  const dashMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+  for (let i = -190; i < 200; i += 12) {
+    const d = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 4), dashMat);
+    d.rotation.x = -Math.PI/2; d.position.set(0, 0.03, i);
+    worldGroup.add(d);
+    const d2 = new THREE.Mesh(new THREE.PlaneGeometry(4, 0.6), dashMat);
+    d2.rotation.x = -Math.PI/2; d2.position.set(i, 0.03, 0);
+    worldGroup.add(d2);
+  }
+
+  // ============ BUILDINGS ============
+  // Palace (Istana Presiden) at center-north
+  buildPalace(0, -60);
+
+  // Government buildings
+  buildBuilding(-50, -100, 18, 14, 22, 0xdddddd, 'Kantor Kementerian');
+  buildBuilding(50, -100, 20, 12, 18, 0xcccccc, 'Gedung DPR');
+
+  // Hospital
+  buildBuilding(-70, 40, 22, 10, 16, 0xffffff, 'Rumah Sakit');
+  // School
+  buildBuilding(70, 40, 20, 8, 14, 0xffaa77, 'Sekolah');
+  // University
+  buildBuilding(-70, -30, 26, 14, 20, 0x8899ff, 'Universitas');
+
+  // Police
+  buildBuilding(70, -30, 16, 8, 14, 0x334488, 'Kantor Polisi');
+  // Military base
+  buildBuilding(-120, -120, 30, 10, 30, 0x445533, 'Markas Militer');
+
+  // Mall
+  buildBuilding(100, 100, 30, 18, 26, 0xff7799, 'Pusat Perbelanjaan');
+  // Market
+  buildBuilding(-100, 100, 24, 8, 22, 0xffcc44, 'Pasar Tradisional');
+
+  // Industrial zone (east far)
+  buildBuilding(160, -160, 40, 20, 40, 0x777777, 'Kawasan Industri');
+
+  // Airport
+  buildAirport(-180, 140);
+  // Harbor
+  buildHarbor(180, 180);
+  // Train station
+  buildBuilding(0, 140, 24, 12, 18, 0xcc8844, 'Stasiun Kereta');
+
+  // Houses (residential - many small)
+  for (let i = 0; i < 40; i++) {
+    const angle = (i/40) * Math.PI * 2;
+    const r = 130 + Math.random()*30;
+    const x = Math.cos(angle) * r;
+    const z = Math.sin(angle) * r * 0.8;
+    buildHouse(x, z);
+  }
+
+  // Trees
+  buildTrees();
+
+  // City park
+  buildPark(40, 60);
+
+  // Tourism
+  buildMonument(-40, 80);
+  buildMonument(60, -60);
+}
+
+function buildPalace(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+
+  // Base plaza
+  const plaza = new THREE.Mesh(new THREE.CylinderGeometry(45, 45, 0.4, 32), new THREE.MeshLambertMaterial({color:0xcccccc}));
+  plaza.position.y = 0.2; plaza.receiveShadow = true;
+  g.add(plaza);
+
+  // Main building (isian) - multiple floors
+  const bodyMat = new THREE.MeshLambertMaterial({color: 0xf5f5f5});
+  const body = new THREE.Mesh(new THREE.BoxGeometry(30, 14, 18), bodyMat);
+  body.position.y = 7; body.castShadow = true; body.receiveShadow = true;
+  g.add(body);
+
+  // Wing left
+  const wingL = new THREE.Mesh(new THREE.BoxGeometry(12, 10, 14), bodyMat);
+  wingL.position.set(-21, 5, 0); wingL.castShadow = true;
+  g.add(wingL);
+  // Wing right
+  const wingR = new THREE.Mesh(new THREE.BoxGeometry(12, 10, 14), bodyMat);
+  wingR.position.set(21, 5, 0); wingR.castShadow = true;
+  g.add(wingR);
+
+  // Dome (gold)
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(7, 24, 16, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshLambertMaterial({color:0xffd700, emissive:0x554400, emissiveIntensity:0.2}));
+  dome.position.y = 14; dome.castShadow = true;
+  g.add(dome);
+
+  // Flag pole with flag
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,20,8), new THREE.MeshLambertMaterial({color:0x888888}));
+  pole.position.set(0, 10, -15);
+  g.add(pole);
+  // Flag (colored based on country)
+  if (G.country) {
+    const flagTex = makeFlagTexture(G.country.flag);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({map: flagTex, side: THREE.DoubleSide}));
+    flag.position.set(3, 18, -15);
+    g.add(flag);
+  }
+
+  // Columns front
+  const colMat = new THREE.MeshLambertMaterial({color:0xffffff});
+  for (let i = -6; i <= 6; i += 2) {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,10,12), colMat);
+    col.position.set(i, 5, 9.5);
+    col.castShadow = true;
+    g.add(col);
+  }
+
+  // Steps
+  for (let i = 0; i < 4; i++) {
+    const step = new THREE.Mesh(new THREE.BoxGeometry(24-i*2, 0.5, 2), new THREE.MeshLambertMaterial({color:0xeeeeee}));
+    step.position.set(0, 0.25+i*0.5, 10+i);
+    g.add(step);
+  }
+
+  // Garden (green patches)
+  const gardenMat = new THREE.MeshLambertMaterial({color:0x2a6b2a});
+  for (const [gx, gz] of [[-30,20],[30,20],[-30,-20],[30,-20]]) {
+    const gd = new THREE.Mesh(new THREE.CircleGeometry(8, 16), gardenMat);
+    gd.rotation.x = -Math.PI/2; gd.position.set(gx, 0.45, gz);
+    g.add(gd);
+  }
+
+  // Garden trees
+  for (const [gx, gz] of [[-30,20],[30,20],[-30,-20],[30,-20],[0,25]]) {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,4,6), new THREE.MeshLambertMaterial({color:0x664422}));
+    trunk.position.set(gx, 2.5, gz);
+    g.add(trunk);
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(3, 5, 8), new THREE.MeshLambertMaterial({color:0x2d8a2d}));
+    leaf.position.set(gx, 6, gz); leaf.castShadow = true;
+    g.add(leaf);
+  }
+
+  // Guard posts
+  for (const [gx,gz] of [[-15, 25],[15,25],[-25, 8],[25,8]]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), new THREE.MeshLambertMaterial({color:0x883333}));
+    post.position.set(gx, 1.5, gz); post.castShadow = true;
+    g.add(post);
+    // Guard inside
+    const guard = makeGuard();
+    guard.position.set(gx, 0, gz);
+    g.add(guard);
+  }
+
+  // Garage building
+  const garage = new THREE.Mesh(new THREE.BoxGeometry(14, 6, 10), new THREE.MeshLambertMaterial({color:0x99aabb}));
+  garage.position.set(-35, 3, -30); garage.castShadow = true;
+  g.add(garage);
+
+  // Personal residence (small villa)
+  const res = new THREE.Mesh(new THREE.BoxGeometry(10, 7, 8), new THREE.MeshLambertMaterial({color:0xffeedd}));
+  res.position.set(38, 3.5, -25); res.castShadow = true;
+  g.add(res);
+
+  // Entrance marker
+  g.userData = { type: 'palace', name: 'Istana Presiden', enterable: true };
+  g.children.forEach(c => c.userData.parentObj = g);
+  buildingsGroup.add(g);
+  G.buildings.push({ x, z, type: 'palace', name: 'Istana Presiden', mesh: g, radius: 45 });
+
+  // Presidential vehicles parked in garage area
+  spawnVehicle('presidential', -42, -30);
+  spawnVehicle('guard', -30, -30);
+}
+
+function buildBuilding(x, z, w, h, d, color, name) {
+  const mat = new THREE.MeshLambertMaterial({color});
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  b.position.set(x, h/2, z);
+  b.castShadow = true; b.receiveShadow = true;
+  buildingsGroup.add(b);
+
+  // Windows (dark planes)
+  const winMat = new THREE.MeshLambertMaterial({color: 0x224466, emissive: 0x112233, emissiveIntensity: 0.3});
+  const rows = Math.floor(h/3);
+  const cols = Math.floor(w/3);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.4), winMat);
+      win.position.set(x - w/2 + 2 + c*3, 2 + r*3, z + d/2 + 0.01);
+      buildingsGroup.add(win);
+    }
+  }
+
+  G.buildings.push({ x, z, type: 'generic', name, mesh: b, radius: Math.max(w,d)/2 });
+}
+
+function buildHouse(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+
+  const colors = [0xddccaa, 0xccbb99, 0xddaa88, 0xaaccdd, 0xbbccaa];
+  const col = colors[Math.floor(Math.random()*colors.length)];
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 6), new THREE.MeshLambertMaterial({color:col}));
+  body.position.y = 2; body.castShadow = true; body.receiveShadow = true;
+  g.add(body);
+
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(5, 3, 4), new THREE.MeshLambertMaterial({color:0xaa3333}));
+  roof.position.y = 5.5; roof.rotation.y = Math.PI/4; roof.castShadow = true;
+  g.add(roof);
+
+  // Door
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshLambertMaterial({color:0x553311}));
+  door.position.set(0, 1.1, 3.01);
+  g.add(door);
+
+  buildingsGroup.add(g);
+  g.userData = { type: 'house', enterable: true, residents: Math.floor(Math.random()*3)+1 };
+  G.buildings.push({ x, z, type: 'house', name: 'Rumah Warga', mesh: g, radius: 5, residents: g.userData.residents });
+}
+
+function buildAirport(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  // Runway
+  const rw = new THREE.Mesh(new THREE.PlaneGeometry(60, 20), new THREE.MeshLambertMaterial({color:0x222222}));
+  rw.rotation.x = -Math.PI/2; rw.position.y = 0.03;
+  g.add(rw);
+  // Dashes
+  for (let i = -28; i < 30; i += 6) {
+    const d = new THREE.Mesh(new THREE.PlaneGeometry(3, 1), new THREE.MeshBasicMaterial({color:0xffffff}));
+    d.rotation.x = -Math.PI/2; d.position.set(i, 0.04, 0);
+    g.add(d);
+  }
+  // Terminal
+  const term = new THREE.Mesh(new THREE.BoxGeometry(16, 6, 10), new THREE.MeshLambertMaterial({color:0x99aabb}));
+  term.position.set(0, 3, 18); term.castShadow = true;
+  g.add(term);
+  // Control tower
+  const tower = new THREE.Mesh(new THREE.CylinderGeometry(2,2,14,12), new THREE.MeshLambertMaterial({color:0xdddddd}));
+  tower.position.set(-12, 7, 18); tower.castShadow = true;
+  g.add(tower);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 5), new THREE.MeshLambertMaterial({color:0x224466, emissive:0x113355, emissiveIntensity:0.4}));
+  top.position.set(-12, 15.5, 18);
+  g.add(top);
+
+  buildingsGroup.add(g);
+  G.buildings.push({ x, z, type: 'airport', name: 'Bandara Internasional', mesh: g, radius: 30 });
+  spawnVehicle('plane', x, z);
+}
+
+function buildHarbor(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  // Water
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshLambertMaterial({color:0x2266aa, transparent:true, opacity:0.85}));
+  water.rotation.x = -Math.PI/2; water.position.y = 0.05;
+  g.add(water);
+  // Dock
+  const dock = new THREE.Mesh(new THREE.BoxGeometry(40, 1, 6), new THREE.MeshLambertMaterial({color:0x885522}));
+  dock.position.set(0, 0.5, -30);
+  g.add(dock);
+  // Ships
+  for (let i = 0; i < 3; i++) {
+    const ship = new THREE.Mesh(new THREE.BoxGeometry(10, 3, 4), new THREE.MeshLambertMaterial({color:0xaa3333}));
+    ship.position.set(-12 + i*12, 1.5, -32);
+    g.add(ship);
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 3), new THREE.MeshLambertMaterial({color:0xffffff}));
+    cabin.position.set(-12 + i*12, 4, -32);
+    g.add(cabin);
+  }
+  buildingsGroup.add(g);
+  G.buildings.push({ x, z, type: 'harbor', name: 'Pelabuhan', mesh: g, radius: 40 });
+}
+
+function buildPark(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(22, 24), new THREE.MeshLambertMaterial({color:0x3a9a3a}));
+  ground.rotation.x = -Math.PI/2; ground.position.y = 0.2;
+  g.add(ground);
+  // Paths
+  const pathMat = new THREE.MeshLambertMaterial({color:0xddccaa});
+  for (let i = 0; i < 4; i++) {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(2, 22), pathMat);
+    p.rotation.x = -Math.PI/2; p.rotation.z = i * Math.PI/2; p.position.y = 0.21;
+    g.add(p);
+  }
+  // Benches
+  for (let i = 0; i < 6; i++) {
+    const ang = (i/6) * Math.PI * 2;
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 0.8), new THREE.MeshLambertMaterial({color:0x663311}));
+    bench.position.set(Math.cos(ang)*12, 0.8, Math.sin(ang)*12);
+    g.add(bench);
+  }
+  // Trees
+  for (let i = 0; i < 8; i++) {
+    const ang = (i/8) * Math.PI * 2 + 0.4;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,4,6), new THREE.MeshLambertMaterial({color:0x664422}));
+    trunk.position.set(Math.cos(ang)*16, 2.2, Math.sin(ang)*16);
+    g.add(trunk);
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(2.5, 5, 8), new THREE.MeshLambertMaterial({color:0x2d8a2d}));
+    leaf.position.set(Math.cos(ang)*16, 6, Math.sin(ang)*16);
+    g.add(leaf);
+  }
+  buildingsGroup.add(g);
+  G.buildings.push({ x, z, type: 'park', name: 'Taman Kota', mesh: g, radius: 22 });
+}
+
+function buildMonument(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 2, 16), new THREE.MeshLambertMaterial({color:0xcccccc}));
+  base.position.y = 1;
+  g.add(base);
+  const obelisk = new THREE.Mesh(new THREE.ConeGeometry(1.5, 20, 4), new THREE.MeshLambertMaterial({color:0xdddddd, emissive:0x333333}));
+  obelisk.position.y = 12;
+  g.add(obelisk);
+  buildingsGroup.add(g);
+  G.buildings.push({ x, z, type: 'monument', name: 'Tugu Nasional', mesh: g, radius: 6 });
+}
+
+function buildTrees() {
+  for (let i = 0; i < 150; i++) {
+    const x = (Math.random() - 0.5) * 600;
+    const z = (Math.random() - 0.5) * 600;
+    // Don't overlap roads
+    if (Math.abs(x) < 20 || Math.abs(z) < 20) continue;
+    if (Math.hypot(x, z) < 90) continue;
+    if (Math.hypot(x - 0, z + 60) < 55) continue;
+
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,3,5), new THREE.MeshLambertMaterial({color:0x664422}));
+    trunk.position.set(x, 1.5, z);
+    worldGroup.add(trunk);
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(2, 4, 6), new THREE.MeshLambertMaterial({color: new THREE.Color().setHSL(0.3, 0.7, 0.3 + Math.random()*0.15)}));
+    leaf.position.set(x, 4.5, z); leaf.castShadow = true;
+    worldGroup.add(leaf);
+  }
+}
+
+function makeFlagTexture(colors) {
+  const cv = document.createElement('canvas');
+  cv.width = 120; cv.height = 80;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = colors[0]; ctx.fillRect(0, 0, 120, 27);
+  ctx.fillStyle = colors[1]; ctx.fillRect(0, 27, 120, 26);
+  ctx.fillStyle = colors[2]; ctx.fillRect(0, 53, 120, 27);
+  return new THREE.CanvasTexture(cv);
+}
+
+// ============ GUARD / NPC MODELS ============
+function makeGuard() {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.4, 1.2, 4, 8) : new THREE.CylinderGeometry(0.4,0.4,1.8,8), new THREE.MeshLambertMaterial({color:0x224422}));
+  body.position.y = 1.1; body.castShadow = true;
+  g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), new THREE.MeshLambertMaterial({color:0xddbb99}));
+  head.position.y = 2.1; head.castShadow = true;
+  g.add(head);
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.2,8), new THREE.MeshLambertMaterial({color:0x111111}));
+  hat.position.y = 2.4;
+  g.add(hat);
+  return g;
+}
+
+function buildPlayer() {
+  playerMesh = new THREE.Group();
+
+  const bodyMat = new THREE.MeshLambertMaterial({color:0x1a1a3a});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.6, 10), bodyMat);
+  body.position.y = 1.0; body.castShadow = true;
+  playerMesh.add(body);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshLambertMaterial({color:0xddbb99}));
+  head.position.y = 2.1; head.castShadow = true;
+  playerMesh.add(head);
+
+  // Suit details - red tie
+  const tie = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.05), new THREE.MeshLambertMaterial({color:0xdd2222}));
+  tie.position.set(0, 1.3, 0.46);
+  playerMesh.add(tie);
+
+  // Presidential sash
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.1), new THREE.MeshLambertMaterial({color:0xffd700, emissive:0x554400}));
+  sash.position.set(0, 1.4, 0.42); sash.rotation.z = 0.3;
+  playerMesh.add(sash);
+
+  playerMesh.position.set(0, 0, 30);
+  scene.add(playerMesh);
+}
+
+// ============ VEHICLES ============
+function spawnVehicle(type, x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+
+  let color = 0xffffff;
+  let w = 3, h = 1.2, l = 5;
+
+  if (type === 'presidential') { color = 0x111111; w = 3; h = 1.4; l = 6; }
+  else if (type === 'guard') { color = 0x223355; }
+  else if (type === 'plane') { w = 6; h = 2; l = 14; color = 0xffffff; }
+  else if (type === 'heli') { w = 3; h = 2; l = 3; color = 0x223344; }
+
+  if (type === 'plane') {
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 14, 12), new THREE.MeshLambertMaterial({color}));
+    body.rotation.z = Math.PI/2; body.position.y = 3;
+    g.add(body);
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 12), new THREE.MeshLambertMaterial({color}));
+    wing.position.y = 3;
+    g.add(wing);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(1, 3, 2), new THREE.MeshLambertMaterial({color}));
+    tail.position.set(-6, 4.5, 0);
+    g.add(tail);
+  } else if (type === 'heli') {
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 8), new THREE.MeshLambertMaterial({color}));
+    body.position.y = 2; body.scale.set(1.4, 1, 1);
+    g.add(body);
+    const rotor = new THREE.Mesh(new THREE.BoxGeometry(6, 0.1, 0.3), new THREE.MeshLambertMaterial({color:0x333333}));
+    rotor.position.y = 3.2;
+    g.add(rotor);
+    g.userData.rotor = rotor;
+  } else {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, l), new THREE.MeshLambertMaterial({color}));
+    body.position.y = h/2 + 0.3; body.castShadow = true;
+    g.add(body);
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(w*0.85, h*0.8, l*0.5), new THREE.MeshLambertMaterial({color: 0x334455, emissive:0x112233}));
+    cabin.position.set(0, h*1.2 + 0.2, 0);
+    g.add(cabin);
+    // Wheels
+    const wheelMat = new THREE.MeshLambertMaterial({color:0x111111});
+    for (const [wx, wz] of [[-w/2, l/2-0.8],[w/2, l/2-0.8],[-w/2, -l/2+0.8],[w/2, -l/2+0.8]]) {
+      const wl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 10), wheelMat);
+      wl.rotation.z = Math.PI/2;
+      wl.position.set(wx, 0.5, wz);
+      g.add(wl);
+    }
+  }
+
+  g.userData = { type, name: type === 'presidential' ? 'Mobil Kepresidenan' : type === 'guard' ? 'Mobil Pengawal' : type === 'plane' ? 'Pesawat Kepresidenan' : 'Kendaraan' };
+  vehicleGroup.add(g);
+  G.vehicles.push({ x, z, type, mesh: g });
+  return g;
+}
+
+// ============ NPC SYSTEM ============
+function spawnNPC() {
+  if (G.npcs.length > 40) return; // performance cap
+  const g = new THREE.Group();
+  const colors = [0x3366cc, 0xcc3366, 0x33cc66, 0xccaa33, 0xaa33cc, 0x33cccc];
+  const col = colors[Math.floor(Math.random()*colors.length)];
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.3, 8), new THREE.MeshLambertMaterial({color: col}));
+  body.position.y = 0.9; body.castShadow = true;
+  g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), new THREE.MeshLambertMaterial({color:0xddbb99}));
+  head.position.y = 1.85;
+  g.add(head);
+
+  // Random spawn location along roads/around city
+  const ang = Math.random() * Math.PI * 2;
+  const r = 40 + Math.random() * 150;
+  g.position.set(Math.cos(ang)*r, 0, Math.sin(ang)*r);
+
+  // Random walking target
+  g.userData = {
+    targetX: (Math.random()-0.5)*250,
+    targetZ: (Math.random()-0.5)*250,
+    speed: 1.5 + Math.random()*1.5,
+    name: ['Budi','Sari','Andi','Rina','Joko','Dewi','Agus','Lina','Rudi','Siti'][Math.floor(Math.random()*10)],
+    activity: ['berjalan','bekerja','berbelanja','istirahat'][Math.floor(Math.random()*4)],
+    mood: 40 + Math.random()*50,
+    timer: 0
+  };
+
+  npcGroup.add(g);
+  G.npcs.push({ mesh: g, ...g.userData });
+}
+
+// ============ CAMERA ============
+function updateCamera(delta) {
+  if (!playerMesh) return;
+  const p = playerMesh.position;
+  const yaw = G.camera.yaw;
+  const pitch = G.camera.pitch;
+  const dist = G.camera.dist;
+
+  let px = p.x - Math.sin(yaw) * Math.cos(pitch) * dist;
+  let pz = p.z - Math.cos(yaw) * Math.cos(pitch) * dist;
+  let py = p.y + Math.sin(pitch) * dist + 3;
+
+  camera.position.lerp(new THREE.Vector3(px, py, pz), 0.15);
+  camera.lookAt(p.x, p.y + 2, p.z);
+}
+
+// ============ INPUT ============
+function setupInput() {
+  // Keyboard
+  addEventListener('keydown', e => { G.keys[e.key.toLowerCase()] = true; });
+  addEventListener('keyup', e => { G.keys[e.key.toLowerCase()] = false; });
+
+  // Joystick
+  const joy = document.getElementById('joystick');
+  const knob = document.getElementById('joystickKnob');
+  let joyId = null, joyCX = 0, joyCY = 0, joyR = 55;
+
+  function joyStart(e) {
+    const t = e.changedTouches ? e.changedTouches[0] : e;
+    joyId = t.identifier ?? 'mouse';
+    const rect = joy.getBoundingClientRect();
+    joyCX = rect.left + rect.width/2;
+    joyCY = rect.top + rect.height/2;
+    joyR = rect.width/2 - 10;
+    G.joystick.active = true;
+    joyMove(e);
+    e.preventDefault();
+  }
+  function joyMove(e) {
+    if (!G.joystick.active) return;
+    const list = e.changedTouches || [e];
+    for (const t of list) {
+      const id = t.identifier ?? 'mouse';
+      if (id !== joyId) continue;
+      let dx = t.clientX - joyCX;
+      let dy = t.clientY - joyCY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > joyR) { dx = dx/dist*joyR; dy = dy/dist*joyR; }
+      G.joystick.x = dx / joyR;
+      G.joystick.y = dy / joyR;
+      knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    }
+    e.preventDefault();
+  }
+  function joyEnd(e) {
+    G.joystick.active = false;
+    G.joystick.x = 0; G.joystick.y = 0;
+    knob.style.transform = 'translate(-50%,-50%)';
+    joyId = null;
+  }
+
+  joy.addEventListener('touchstart', joyStart, {passive:false});
+  joy.addEventListener('touchmove', joyMove, {passive:false});
+  joy.addEventListener('touchend', joyEnd);
+  joy.addEventListener('touchcancel', joyEnd);
+  joy.addEventListener('mousedown', joyStart);
+  addEventListener('mousemove', joyMove);
+  addEventListener('mouseup', joyEnd);
+
+  // Touch camera rotation on canvas
+  let touchId = null, lastX = 0, lastY = 0;
+  renderer.domElement.addEventListener('touchstart', e => {
+    if (e.touches.length === 1 && e.touches[0].clientX > innerWidth/2) {
+      touchId = e.touches[0].identifier;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  });
+  renderer.domElement.addEventListener('touchmove', e => {
+    for (const t of e.touches) {
+      if (t.identifier === touchId) {
+        G.camera.yaw -= (t.clientX - lastX) * 0.01;
+        G.camera.pitch = Math.max(0.1, Math.min(1.2, G.camera.pitch + (t.clientY - lastY) * 0.005));
+        lastX = t.clientX; lastY = t.clientY;
+      }
+    }
+  }, {passive:true});
+  renderer.domElement.addEventListener('touchend', e => { touchId = null; });
+
+  // Mouse drag for camera
+  let mouseDown = false;
+  renderer.domElement.addEventListener('mousedown', e => { mouseDown = true; lastX = e.clientX; lastY = e.clientY; });
+  addEventListener('mousemove', e => {
+    if (!mouseDown) return;
+    G.camera.yaw -= (e.clientX - lastX) * 0.005;
+    G.camera.pitch = Math.max(0.1, Math.min(1.2, G.camera.pitch + (e.clientY - lastY) * 0.003));
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  addEventListener('mouseup', () => { mouseDown = false; });
+
+  // Mouse wheel zoom
+  addEventListener('wheel', e => {
+    G.camera.dist = Math.max(5, Math.min(30, G.camera.dist + e.deltaY * 0.01));
+  });
+
+  // Action buttons
+  document.getElementById('btnInteract').addEventListener('click', interactNearby);
+  document.getElementById('btnEnter').addEventListener('click', enterVehicleNearby);
+}
+
+// ============ INTERACTION ============
+function interactNearby() {
+  if (!playerMesh) return;
+  const p = playerMesh.position;
+  let nearest = null, nearestDist = 8;
+  for (const b of G.buildings) {
+    const d = Math.hypot(p.x - b.x, p.z - b.z);
+    if (d < b.radius + 5 && d < nearestDist) {
+      nearestDist = d; nearest = b;
+    }
+  }
+  // Also check NPCs
+  let nearNPC = null, npcDist = 4;
+  for (const n of G.npcs) {
+    const d = Math.hypot(p.x - n.mesh.position.x, p.z - n.mesh.position.z);
+    if (d < npcDist) { npcDist = d; nearNPC = n; }
+  }
+
+  if (nearNPC) {
+    talkToNPC(nearNPC);
+  } else if (nearest) {
+    if (nearest.type === 'palace') {
+      showToast(`🏛️ Anda di ${nearest.name}. Gunakan menu Pemerintah untuk mengatur negara.`);
+    } else if (nearest.type === 'house') {
+      showToast(`🏠 Rumah warga dengan ${nearest.residents} penghuni.`);
+    } else if (nearest.type === 'park') {
+      showToast(`🌳 ${nearest.name} — tempat warga bersantai.`);
+    } else {
+      showToast(`📍 ${nearest.name}`);
+    }
+  } else {
+    showToast('Tidak ada yang bisa diinteraksi di dekat sini.');
+  }
+}
+
+function talkToNPC(npc) {
+  const activities = ['Saya sedang berjalan-jalan, Pak Presiden!', 'Terima kasih telah membangun jalan baru!', 'Pak, harga sembako naik terus...', 'Saya bangga pada negara kita!', 'Mohon tingkatkan lapangan kerja, Pak!', 'Sekolah anak saya perlu perbaikan, Pak.'];
+  const msg = activities[Math.floor(Math.random()*activities.length)];
+  const happy = Math.random() > 0.4;
+  showToast(`💬 ${npc.name}: "${msg}" ${happy ? '😊' : '😔'}`);
+  // Mood effect
+  G.approval = Math.max(0, Math.min(100, G.approval + (happy ? 1 : -0.5)));
+  updateHUD();
+}
+
+function enterVehicleNearby() {
+  if (G.player.inVehicle) {
+    // Exit
+    const v = G.player.inVehicle;
+    v.mesh.visible = true;
+    G.player.inVehicle = null;
+    playerMesh.visible = true;
+    showToast('🚶 Keluar dari kendaraan.');
+    return;
+  }
+  const p = playerMesh.position;
+  let nearest = null, nearestDist = 6;
+  for (const v of G.vehicles) {
+    const d = Math.hypot(p.x - v.x, p.z - v.z);
+    if (d < nearestDist) { nearestDist = d; nearest = v; }
+  }
+  if (nearest) {
+    G.player.inVehicle = nearest;
+    playerMesh.position.copy(nearest.mesh.position);
+    playerMesh.position.y = 2;
+    showToast(`🚗 Masuk ${nearest.mesh.userData.name}. Mengemudi...`);
+  } else {
+    showToast('Tidak ada kendaraan dekat. Dekati kendaraan dulu.');
+  }
+}
+
+// ============ GAME LOOP ============
+let lastTime = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.1);
+  const t = clock.elapsedTime;
+
+  if (G.suspended) { renderer.render(scene, camera); return; }
+
+  // Player movement
+  if (playerMesh) {
+    let mvX = 0, mvZ = 0;
+    if (G.keys['w'] || G.keys['arrowup']) mvZ -= 1;
+    if (G.keys['s'] || G.keys['arrowdown']) mvZ += 1;
+    if (G.keys['a'] || G.keys['arrowleft']) mvX -= 1;
+    if (G.keys['d'] || G.keys['arrowright']) mvX += 1;
+    mvX += G.joystick.x;
+    mvZ += G.joystick.y;
+
+    const len = Math.hypot(mvX, mvZ);
+    if (len > 0.1) {
+      mvX /= len; mvZ /= len;
+      const speed = G.player.inVehicle ? 25 : 8;
+      // Movement relative to camera yaw
+      const cosY = Math.cos(G.camera.yaw);
+      const sinY = Math.sin(G.camera.yaw);
+      const wx = mvX * cosY - mvZ * sinY;
+      const wz = mvX * sinY + mvZ * cosY;
+      playerMesh.position.x += wx * speed * delta;
+      playerMesh.position.z += wz * speed * delta;
+      playerMesh.rotation.y = Math.atan2(wx, wz);
+      G.player.x = playerMesh.position.x;
+      G.player.z = playerMesh.position.z;
+
+      // Update vehicle position if in vehicle
+      if (G.player.inVehicle) {
+        G.player.inVehicle.mesh.position.copy(playerMesh.position);
+        G.player.inVehicle.mesh.position.y = 0;
+        G.player.inVehicle.mesh.rotation.y = playerMesh.rotation.y;
+        G.player.inVehicle.x = playerMesh.position.x;
+        G.player.inVehicle.z = playerMesh.position.z;
+        playerMesh.position.y = 2;
+        playerMesh.visible = false;
+        G.player.inVehicle.mesh.visible = true;
+      }
+    }
+    // Keep player within world bounds
+    const lim = 280;
+    playerMesh.position.x = Math.max(-lim, Math.min(lim, playerMesh.position.x));
+    playerMesh.position.z = Math.max(-lim, Math.min(lim, playerMesh.position.z));
+  }
+
+  updateCamera(delta);
+
+  // NPCs update
+  for (const n of G.npcs) {
+    const mesh = n.mesh;
+    const dx = n.targetX - mesh.position.x;
+    const dz = n.targetZ - mesh.position.z;
+    const d = Math.hypot(dx, dz);
+    if (d < 2) {
+      n.targetX = (Math.random()-0.5)*250;
+      n.targetZ = (Math.random()-0.5)*250;
+    } else {
+      mesh.position.x += (dx/d) * n.speed * delta;
+      mesh.position.z += (dz/d) * n.speed * delta;
+      mesh.rotation.y = Math.atan2(dx, dz);
+    }
+  }
+
+  // Helicopter rotor animation
+  for (const v of G.vehicles) {
+    if (v.mesh.userData.rotor) v.mesh.userData.rotor.rotation.y += delta * 20;
+  }
+
+  // Time simulation
+  updateGameTime(delta);
+
+  // Weather & lighting
+  updateLighting();
+
+  // Render
+  renderer.render(scene, camera);
+  drawMinimap();
+}
+
+// ============ TIME & ECONOMY ============
+function updateGameTime(delta) {
+  G.time.minute += delta * 30; // 1 real sec = 30 game min (fast)
+  if (G.time.minute >= 60) {
+    G.time.minute -= 60;
+    G.time.hour++;
+    if (G.time.hour >= 24) {
+      G.time.hour = 0;
+      G.time.day++;
+      G.time.dayName = DAYS[G.time.day % 7];
+      dailyTick();
+    }
+  }
+
+  // Economy tick every game hour
+  G._econTimer = (G._econTimer || 0) + delta;
+  if (G._econTimer > 5) { // every 5 real seconds ≈ economy update
+    G._econTimer = 0;
+    economyTick();
+  }
+
+  // Autosave
+  G.autosaveTimer += delta;
+  if (G.autosaveTimer > 20) {
+    G.autosaveTimer = 0;
+    saveGame(true);
+  }
+
+  updateHUD();
+}
+
+function dailyTick() {
+  // Daily economy
+  const pop = G.country.population;
+  const taxRevenue = Math.floor(pop * G.economy.taxRate * 0.5);
+  const expenses = Math.floor(pop * 0.3 + G.cabinet.length * 50000);
+  G.economy.cash += taxRevenue - expenses;
+  G.economy.income = taxRevenue;
+  G.economy.expense = expenses;
+
+  // Population growth
+  G.country.population = Math.floor(pop * (1 + (G.approval > 60 ? 0.002 : -0.001)));
+
+  // Unemployment
+  if (G.approval > 70) G.economy.unemployment = Math.max(2, G.economy.unemployment - 0.2);
+  else G.economy.unemployment = Math.min(25, G.economy.unemployment + 0.1);
+
+  // Spawn new NPCs if population grew
+  if (Math.random() > 0.5) spawnNPC();
+}
+
+function economyTick() {
+  // Small fluctuations
+  if (Math.random() > 0.7) {
+    G.approval = Math.max(0, Math.min(100, G.approval + (Math.random() - 0.5) * 0.5));
+  }
+}
+
+function updateLighting() {
+  const h = G.time.hour + G.time.minute/60;
+  const sun = scene.userData.sun;
+  const hemi = scene.userData.hemi;
+
+  // Sun position (day arc)
+  const angle = ((h - 6) / 24) * Math.PI * 2;
+  sun.position.set(Math.cos(angle)*100, Math.sin(angle)*100, 30);
+  const intensity = Math.max(0, Math.sin(angle) * 0.9);
+  sun.intensity = intensity;
+
+  // Sky color transitions
+  let bgColor;
+  if (h < 6 || h > 18) {
+    bgColor = new THREE.Color(0x050a1a);
+    hemi.intensity = 0.15;
+  } else if (h < 8 || h > 17) {
+    bgColor = new THREE.Color(0xff8844);
+    hemi.intensity = 0.4;
+  } else if (h < 10 || h > 15) {
+    bgColor = new THREE.Color(0x99ccff);
+    hemi.intensity = 0.6;
+  } else {
+    bgColor = new THREE.Color(0x87ceeb);
+    hemi.intensity = 0.7;
+  }
+
+  if (G.time.weather === 'hujan' || G.time.weather === 'mendung') {
+    bgColor.lerp(new THREE.Color(0x555566), 0.6);
+    sun.intensity *= 0.3;
+  }
+
+  scene.background.lerp(bgColor, 0.02);
+  scene.fog.color.copy(scene.background);
+
+  // Random weather change
+  G._weatherTimer = (G._weatherTimer || 0) + 0.016;
+  if (G._weatherTimer > 120) {
+    G._weatherTimer = 0;
+    const ws = ['cerah', 'cerah', 'mendung', 'hujan'];
+    G.time.weather = ws[Math.floor(Math.random()*ws.length)];
+    showToast(`🌤️ Cuaca berubah: ${G.time.weather}`);
+  }
+}
+
+function updateHUD() {
+  if (!G.country) return;
+  const pop = G.country.population.toLocaleString('id-ID');
+  document.getElementById('hud_cash').textContent = formatCurrency(G.economy.cash);
+  document.getElementById('hud_pop').textContent = pop;
+  document.getElementById('hud_app').textContent = Math.round(G.approval) + '%';
+  document.getElementById('hud_unemp').textContent = G.economy.unemployment.toFixed(1) + '%';
+  const hh = String(G.time.hour).padStart(2,'0');
+  const mm = String(Math.floor(G.time.minute)).padStart(2,'0');
+  document.getElementById('hud_clock').textContent = `${G.time.dayName}, ${String(G.time.day).padStart(2,'0')}:${hh}:${mm}`;
+  const weatherIcon = { 'cerah': '☀️', 'mendung': '☁️', 'hujan': '🌧️' }[G.time.weather] || '☀️';
+  document.getElementById('hud_weather').textContent = weatherIcon + ' ' + G.time.weather;
+}
+
+function formatCurrency(v) {
+  if (Math.abs(v) >= 1e9) return (v/1e9).toFixed(2) + ' M';
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(2) + ' Jt';
+  if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(1) + ' Rb';
+  return Math.round(v);
+}
+
+// ============ MINIMAP ============
+function drawMinimap() {
+  if (!miniCtx) return;
+  const w = 220, h = 220;
+  miniCtx.fillStyle = '#0a1420';
+  miniCtx.fillRect(0, 0, w, h);
+
+  const toMap = (x, z) => {
+    const scale = w / 600;
+    return [w/2 + x * scale, h/2 + z * scale];
+  };
+
+  // Roads
+  miniCtx.strokeStyle = '#444';
+  miniCtx.lineWidth = 4;
+  miniCtx.beginPath();
+  miniCtx.moveTo(w/2, 0); miniCtx.lineTo(w/2, h);
+  miniCtx.moveTo(0, h/2); miniCtx.lineTo(w, h/2);
+  miniCtx.stroke();
+
+  // Buildings
+  for (const b of G.buildings) {
+    const [mx, mz] = toMap(b.x, b.z);
+    if (b.type === 'palace') miniCtx.fillStyle = '#ffd700';
+    else if (b.type === 'house') miniCtx.fillStyle = '#aa8866';
+    else if (b.type === 'park') miniCtx.fillStyle = '#33aa33';
+    else if (b.type === 'airport') miniCtx.fillStyle = '#8888ff';
+    else if (b.type === 'harbor') miniCtx.fillStyle = '#2299cc';
+    else miniCtx.fillStyle = '#999';
+    miniCtx.fillRect(mx-2, mz-2, 4, 4);
+  }
+
+  // NPCs
+  miniCtx.fillStyle = '#00ffff';
+  for (const n of G.npcs) {
+    const [mx, mz] = toMap(n.mesh.position.x, n.mesh.position.z);
+    miniCtx.fillRect(mx-1, mz-1, 2, 2);
+  }
+
+  // Player
+  if (playerMesh) {
+    const [mx, mz] = toMap(playerMesh.position.x, playerMesh.position.z);
+    miniCtx.fillStyle = '#ff0000';
+    miniCtx.beginPath();
+    miniCtx.arc(mx, mz, 3, 0, Math.PI*2);
+    miniCtx.fill();
+    miniCtx.strokeStyle = '#fff';
+    miniCtx.lineWidth = 1;
+    miniCtx.stroke();
+  }
+}
+
+// ============ UI / MENUS ============
+function showToast(msg, dur = 2500) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  clearTimeout(n._t);
+  n._t = setTimeout(() => n.classList.remove('show'), dur);
+}
+
+function openModal(html) {
+  const m = document.getElementById('modal');
+  const p = document.getElementById('modalPanel');
+  p.innerHTML = html;
+  m.classList.add('show');
+  G.suspended = true;
+  // Close buttons
+  p.querySelectorAll('.closeBtn').forEach(b => b.onclick = closeModal);
+  m.onclick = (e) => { if (e.target === m) closeModal(); };
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  G.suspended = false;
+}
+
+function menuGovernment() {
+  const cabinetList = G.cabinet.length ? G.cabinet.map(c => `
+    <div class="row"><span>${c.icon} ${c.role}</span><span style="color:#ffd700">${c.name}</span></div>
+  `).join('') : '<p style="color:#888">Belum ada menteri. Angkat sekarang.</p>';
+
+  openModal(`
+    <h2>🏛️ Pemerintahan <button class="closeBtn">✕</button></h2>
+    <h3>Kabinet Menteri</h3>
+    ${cabinetList}
+    <button class="btn" style="width:100%;margin-top:10px" onclick="appointCabinet()">➕ Bentuk Kabinet Lengkap</button>
+
+    <h3>Kebijakan</h3>
+    <div class="grid2">
+      <button class="btn sec" onclick="policyTax()">💵 Ubah Pajak</button>
+      <button class="btn sec" onclick="policyBuildSchool()">🏫 Bangun Sekolah</button>
+      <button class="btn sec" onclick="policyBuildHospital()">🏥 Bangun RS</button>
+      <button class="btn sec" onclick="policyBuildRoad()">🛣️ Bangun Jalan</button>
+      <button class="btn sec" onclick="policySubsidy()">📦 Subsidi Pangan</button>
+      <button class="btn sec" onclick="policySpeech()">🎤 Pidato Kenegaraan</button>
+    </div>
+
+    <h3>Undang-Undang</h3>
+    <div class="row"><span>📜 UU Pajak Progresif</span>
+      <button class="btn ${G.laws.includes('pajak')?'':'sec'}" ${G.laws.includes('pajak')?'disabled':''} onclick="passLaw('pajak')">${G.laws.includes('pajak')?'Aktif':'Sahkan'}</button>
+    </div>
+    <div class="row"><span>📜 UU Pendidikan Gratis</span>
+      <button class="btn ${G.laws.includes('edu')?'':'sec'}" ${G.laws.includes('edu')?'disabled':''} onclick="passLaw('edu')">${G.laws.includes('edu')?'Aktif':'Sahkan'}</button>
+    </div>
+    <div class="row"><span>📜 UU Kesehatan Nasional</span>
+      <button class="btn ${G.laws.includes('health')?'':'sec'}" ${G.laws.includes('health')?'disabled':''} onclick="passLaw('health')">${G.laws.includes('health')?'Aktif':'Sahkan'}</button>
+    </div>
+
+    <h3>Status</h3>
+    <div class="grid2">
+      <div class="card"><div class="lbl">Kementerian</div><div class="v">${G.cabinet.length}/6</div></div>
+      <div class="card"><div class="lbl">UU Aktif</div><div class="v">${G.laws.length}</div></div>
+      <div class="card"><div class="lbl">Pembangunan</div><div class="v">${G.buildings.filter(b=>b.builtByPlayer).length}</div></div>
+      <div class="card"><div class="lbl">Approval</div><div class="v">${Math.round(G.approval)}%</div></div>
+    </div>
+  `);
+}
+
+function appointCabinet() {
+  const roles = [
+    { role: 'Menteri Keuangan', icon: '💰', name: 'Bpk. Hartono' },
+    { role: 'Menteri Pertahanan', icon: '🛡️', name: 'Jend. Suryo' },
+    { role: 'Menteri Pendidikan', icon: '📚', name: 'Ibu Anisa' },
+    { role: 'Menteri Kesehatan', icon: '🏥', name: 'dr. Rahmat' },
+    { role: 'Menteri Luar Negeri', icon: '🌍', name: 'Ibu Sari' },
+    { role: 'Menteri Infrastruktur', icon: '🏗️', name: 'Bpk. Wijaya' },
+  ];
+  for (const r of roles) {
+    if (!G.cabinet.find(c => c.role === r.role)) {
+      G.cabinet.push(r);
+    }
+  }
+  G.economy.expense += 300000;
+  showToast('✅ Kabinet lengkap terbentuk! 6 menteri diangkat.');
+  closeModal(); menuGovernment();
+}
+
+function policyTax() {
+  openModal(`
+    <h2>💵 Kebijakan Pajak <button class="closeBtn">✕</button></h2>
+    <p>Atur tingkat pajak warga. Pajak tinggi = pemasukan besar tapi approval turun.</p>
+    <div class="field"><label>Tingkat Pajak: <span id="taxVal">${G.economy.taxRate}%</span></label>
+      <input type="range" min="0" max="50" value="${G.economy.taxRate}" id="taxSlider" style="margin-top:8px">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" style="flex:1" onclick="applyTax()">Terapkan</button>
+      <button class="btn sec" style="flex:1" onclick="closeModal();menuGovernment()">Kembali</button>
+    </div>
+  `);
+  document.getElementById('taxSlider').oninput = e => {
+    document.getElementById('taxVal').textContent = e.target.value + '%';
+  };
+}
+
+function applyTax() {
+  const v = parseInt(document.getElementById('taxSlider').value);
+  const delta = v - G.economy.taxRate;
+  G.economy.taxRate = v;
+  G.approval = Math.max(0, G.approval - delta * 0.8);
+  showToast(`✅ Pajak diubah menjadi ${v}%. Approval berubah.`);
+  closeModal(); menuGovernment();
+}
+
+function policyBuildSchool() {
+  if (G.economy.cash < 500000) return showToast('❌ Kas tidak cukup (butuh 500rb)');
+  G.economy.cash -= 500000;
+  G.approval += 3;
+  // Build in random location
+  const x = (Math.random()-0.5)*200, z = (Math.random()-0.5)*200;
+  buildBuilding(x, z, 14, 8, 12, 0x99ccff, 'Sekolah Baru');
+  showToast('🏫 Sekolah baru dibangun! Approval +3');
+  closeModal(); menuGovernment();
+}
+
+function policyBuildHospital() {
+  if (G.economy.cash < 800000) return showToast('❌ Kas tidak cukup (butuh 800rb)');
+  G.economy.cash -= 800000;
+  G.approval += 4;
+  const x = (Math.random()-0.5)*200, z = (Math.random()-0.5)*200;
+  buildBuilding(x, z, 16, 10, 14, 0xffffff, 'RS Baru');
+  showToast('🏥 Rumah sakit baru dibangun! Approval +4');
+  closeModal(); menuGovernment();
+}
+
+function policyBuildRoad() {
+  if (G.economy.cash < 200000) return showToast('❌ Kas tidak cukup (butuh 200rb)');
+  G.economy.cash -= 200000;
+  G.approval += 2;
+  const x = (Math.random()-0.5)*250;
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(80, 8), new THREE.MeshLambertMaterial({color:0x333333}));
+  road.rotation.x = -Math.PI/2; road.rotation.z = Math.random()*Math.PI;
+  road.position.set(x, 0.05, x);
+  buildingsGroup.add(road);
+  showToast('🛣️ Jalan baru dibangun! Approval +2');
+  closeModal(); menuGovernment();
+}
+
+function policySubsidy() {
+  if (G.economy.cash < 400000) return showToast('❌ Kas tidak cukup');
+  G.economy.cash -= 400000;
+  G.approval = Math.min(100, G.approval + 8);
+  showToast('📦 Subsidi pangan diluncurkan! Approval +8');
+  closeModal(); menuGovernment();
+}
+
+function policySpeech() {
+  G.approval = Math.min(100, G.approval + 5);
+  const speeches = [
+    'Saudara-saudara sebangsa dan setanah air, kita akan bangun negara ini bersama!',
+    'Pemerintah berkomitmen menyejahterakan seluruh rakyat tanpa terkecuali.',
+    'Mari bersatu membangun negeri yang makmur dan berkeadilan!',
+  ];
+  showToast('🎤 ' + speeches[Math.floor(Math.random()*speeches.length)] + ' (Approval +5)');
+  closeModal(); menuGovernment();
+}
+
+function passLaw(id) {
+  if (G.laws.includes(id)) return;
+  G.laws.push(id);
+  if (id === 'pajak') G.economy.taxRate = 20;
+  if (id === 'edu') G.approval += 5;
+  if (id === 'health') G.approval += 5;
+  showToast('📜 Undang-undang disahkan!');
+  closeModal(); menuGovernment();
+}
+
+function menuFinance() {
+  openModal(`
+    <h2>💵 Keuangan Negara <button class="closeBtn">✕</button></h2>
+    <div class="grid2">
+      <div class="card"><div class="lbl">Kas Negara</div><div class="v">${formatCurrency(G.economy.cash)}</div></div>
+      <div class="card"><div class="lbl">Pendapatan/hari</div><div class="v">${formatCurrency(G.economy.income)}</div></div>
+      <div class="card"><div class="lbl">Pengeluaran/hari</div><div class="v">${formatCurrency(G.economy.expense)}</div></div>
+      <div class="card"><div class="lbl">Pajak</div><div class="v">${G.economy.taxRate}%</div></div>
+      <div class="card"><div class="lbl">Inflasi</div><div class="v">${G.economy.inflation}%</div></div>
+      <div class="card"><div class="lbl">Pengangguran</div><div class="v">${G.economy.unemployment.toFixed(1)}%</div></div>
+    </div>
+    <h3>Aksi Keuangan</h3>
+    <button class="btn" style="width:100%;margin-bottom:8px" onclick="borrowIMF()">🏦 Pinjam dari IMF (+10 Jt, bunga)</button>
+    <button class="btn sec" style="width:100%;margin-bottom:8px" onclick="raiseSalary()">💸 Naikkan Gaji PNS (Approval+)</button>
+    <button class="btn sec" style="width:100%" onclick="closeModal();menuGovernment()">Kembali</button>
+  `);
+}
+
+function borrowIMF() {
+  if (G.economy.debt === undefined) G.economy.debt = 0;
+  if (G.economy.debt > 50000000) return showToast('❌ Utang terlalu tinggi');
+  G.economy.cash += 10000000;
+  G.economy.debt = (G.economy.debt || 0) + 10000000;
+  G.approval -= 3;
+  showToast('🏦 Pinjaman 10 Jt diterima. Bunga akan dipotong harian.');
+  closeModal(); menuFinance();
+}
+
+function raiseSalary() {
+  if (G.economy.cash < 1000000) return showToast('❌ Kas tidak cukup');
+  G.economy.cash -= 1000000;
+  G.approval += 6;
+  showToast('💸 Gaji PNS naik! Approval +6');
+  closeModal(); menuFinance();
+}
+
+function menuProperty() {
+  const list = G.properties.length ? G.properties.map(p => `
+    <div class="row"><span>🏠 ${p.name}</span><span style="color:#8fa0b5">${p.type}</span></div>
+  `).join('') : '<p style="color:#888">Belum punya properti pribadi.</p>';
+
+  openModal(`
+    <h2>🏠 Properti <button class="closeBtn">✕</button></h2>
+    <h3>Properti Anda</h3>
+    ${list}
+    <h3>Beli Properti</h3>
+    <div class="grid2">
+      <button class="btn sec" onclick="buyProperty('Rumah', 500000)">🏠 Rumah (500rb)</button>
+      <button class="btn sec" onclick="buyProperty('Apartemen', 800000)">🏢 Apartemen (800rb)</button>
+      <button class="btn sec" onclick="buyProperty('Vila', 1500000)">🏖️ Vila (1.5Jt)</button>
+      <button class="btn sec" onclick="buyProperty('Tanah', 300000)">🌱 Tanah (300rb)</button>
+    </div>
+  `);
+}
+
+function buyProperty(type, price) {
+  if (G.economy.cash < price) return showToast('❌ Kas pribadi tidak cukup');
+  G.economy.cash -= price;
+  const names = ['Vila Mawar','Rumah Kenari','Apartemen Sakura','Tanah Melati'];
+  G.properties.push({ name: names[G.properties.length % names.length] || type, type });
+  showToast(`✅ ${type} berhasil dibeli!`);
+  closeModal(); menuProperty();
+}
+
+function menuVehicle() {
+  const list = G.vehicles.map(v => `
+    <div class="row"><span>🚗 ${v.mesh.userData.name}</span>
+      <button class="btn sec" onclick="teleportToVehicle(${v.x},${v.z})">Pergi</button>
+    </div>
+  `).join('');
+
+  openModal(`
+    <h2>🚗 Kendaraan <button class="closeBtn">✕</button></h2>
+    <p>Dekati kendaraan dan tekan tombol 🚪 untuk masuk.</p>
+    <h3>Daftar Kendaraan</h3>
+    ${list}
+    <h3>Beli Kendaraan Baru</h3>
+    <div class="grid2">
+      <button class="btn sec" onclick="buyVehicle('heli', 8000000)">🚁 Helikopter (8Jt)</button>
+      <button class="btn sec" onclick="buyVehicle('presidential', 5000000)">🚗 Mobil Dinas (5Jt)</button>
+    </div>
+  `);
+}
+
+function teleportToVehicle(x, z) {
+  if (playerMesh) {
+    playerMesh.position.set(x + 5, 0, z + 5);
+    showToast('📍 Anda mendekati kendaraan.');
+  }
+  closeModal();
+}
+
+function buyVehicle(type, price) {
+  if (G.economy.cash < price) return showToast('❌ Kas tidak cukup');
+  G.economy.cash -= price;
+  spawnVehicle(type, playerMesh.position.x + 8, playerMesh.position.z);
+  showToast(`✅ Kendaraan baru ditambahkan!`);
+  closeModal(); menuVehicle();
+}
+
+function menuSocial() {
+  const satisfied = G.approval;
+  const npcCount = G.npcs.length;
+  openModal(`
+    <h2>🌍 Warga Negara <button class="closeBtn">✕</button></h2>
+    <div class="grid2">
+      <div class="card"><div class="lbl">Total Populasi</div><div class="v">${G.country.population.toLocaleString('id-ID')}</div></div>
+      <div class="card"><div class="lbl">NPC Aktif</div><div class="v">${npcCount}</div></div>
+      <div class="card"><div class="lbl">Approval Rate</div><div class="v">${Math.round(satisfied)}%</div></div>
+      <div class="card"><div class="lbl">Kepuasan</div><div class="v">${satisfied > 70 ? '😊 Tinggi' : satisfied > 40 ? '😐 Sedang' : '😔 Rendah'}</div></div>
+    </div>
+    <h3>Dengar Aspirasi Rakyat</h3>
+    <button class="btn" style="width:100%;margin-bottom:8px" onclick="hearAspiration()">👂 Kunjungi Warga</button>
+    <button class="btn sec" style="width:100%" onclick="rallySupport()">📣 Kampanye Dukungan</button>
+  `);
+}
+
+function hearAspiration() {
+  const aspirations = [
+    'Warga minta harga sembako diturunkan.',
+    'Warga minta lapangan kerja baru.',
+    'Warga senang dengan pembangunan jalan.',
+    'Warga mengeluhkan biaya pendidikan.',
+    'Warga minta fasilitas kesehatan diperbaiki.',
+  ];
+  showToast('👂 "' + aspirations[Math.floor(Math.random()*aspirations.length)] + '"');
+  G.approval = Math.min(100, G.approval + 2);
+  closeModal(); menuSocial();
+}
+
+function rallySupport() {
+  if (G.economy.cash < 300000) return showToast('❌ Butuh 300rb untuk kampanye');
+  G.economy.cash -= 300000;
+  G.approval = Math.min(100, G.approval + 8);
+  showToast('📣 Kampanye sukses! Approval +8');
+  closeModal(); menuSocial();
+}
+
+function menuSettings() {
+  openModal(`
+    <h2>⚙️ Pengaturan <button class="closeBtn">✕</button></h2>
+    <div class="card" style="margin-bottom:10px">
+      <div class="lbl">Negara</div><div class="v">${G.country.name}</div>
+      <p style="margin-top:6px;color:#8fa0b5">Ibu Kota: ${G.country.capital} • ${G.country.gov} • ${G.country.currency}</p>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:8px" onclick="saveGame()">💾 Simpan Game</button>
+    <button class="btn sec" style="width:100%;margin-bottom:8px" onclick="loadGame()">📂 Muat Save</button>
+    <button class="btn sec" style="width:100%;margin-bottom:8px" onclick="if(confirm('Reset negara? Semua progress hilang.')){localStorage.removeItem('pls_save');location.reload();}">🔄 Reset Negara</button>
+    <h3>Kontrol</h3>
+    <p>• WASD / Panah: Gerak<br>• Drag: Putar kamera<br>• Scroll: Zoom<br>• ✋ Interaksi • 🚪 Masuk kendaraan</p>
+    <h3>Info</h3>
+    <p>President Life Simulator v1.0<br>Negara: ${G.country.name}<br>Hari: ${G.time.day} (${G.time.dayName})</p>
+  `);
+}
+
+function saveGame(silent) {
+  try {
+    const save = {
+      country: G.country,
+      economy: G.economy,
+      approval: G.approval,
+      time: G.time,
+      cabinet: G.cabinet,
+      laws: G.laws,
+      properties: G.properties,
+      playerPos: playerMesh ? { x: playerMesh.position.x, z: playerMesh.position.z } : null,
+      vehicles: G.vehicles.map(v => ({ x: v.x, z: v.z, type: v.type })),
+      savedAt: Date.now()
+    };
+    localStorage.setItem('pls_save', JSON.stringify(save));
+    if (!silent) showToast('💾 Game berhasil disimpan!');
+  } catch (e) {
+    if (!silent) showToast('❌ Gagal menyimpan: ' + e.message);
+  }
+}
+
+function loadGame(silent) {
+  try {
+    const raw = localStorage.getItem('pls_save');
+    if (!raw) { if (!silent) showToast('Belum ada save data.'); return false; }
+    const s = JSON.parse(raw);
+    if (!s.country) return false;
+
+    G.country = s.country;
+    G.economy = { ...G.economy, ...s.economy };
+    G.approval = s.approval;
+    G.time = { ...G.time, ...s.time };
+    G.cabinet = s.cabinet || [];
+    G.laws = s.laws || [];
+    G.properties = s.properties || [];
+
+    if (s.playerPos && playerMesh) {
+      playerMesh.position.x = s.playerPos.x;
+      playerMesh.position.z = s.playerPos.z;
+    }
+
+    if (!silent) {
+      showToast('📂 Save dimuat!');
+      document.getElementById('setup').classList.remove('show');
+      document.getElementById('topBar').style.display = 'flex';
+      document.getElementById('bottomNav').style.display = 'grid';
+      document.getElementById('minimap').style.display = 'block';
+      updateHUD();
+    }
+    return true;
+  } catch (e) {
+    if (!silent) showToast('❌ Gagal memuat: ' + e.message);
+    return false;
+  }
+}
+
+// ============ SETUP ============
+document.getElementById('startBtn').onclick = () => {
+  const name = document.getElementById('s_name').value.trim() || 'Nusantara';
+  const capital = document.getElementById('s_capital').value.trim() || 'Kartapura';
+  const currency = document.getElementById('s_currency').value.trim() || 'Rupiah';
+  const pop = parseInt(document.getElementById('s_pop').value);
+  const gov = document.getElementById('s_gov').value;
+  const flag = [
+    document.getElementById('s_f1').value,
+    document.getElementById('s_f2').value,
+    document.getElementById('s_f3').value,
+  ];
+
+  G.country = { name, capital, currency, population: pop, gov, flag };
+
+  document.getElementById('setup').classList.remove('show');
+  document.getElementById('topBar').style.display = 'flex';
+  document.getElementById('bottomNav').style.display = 'grid';
+  document.getElementById('minimap').style.display = 'block';
+
+  // Update palace flag
+  const flagTex = makeFlagTexture(flag);
+  for (const b of G.buildings) {
+    if (b.type === 'palace') {
+      b.mesh.children.forEach(c => {
+        if (c.material && c.material.map) {
+          c.material.map = flagTex;
+          c.material.needsUpdate = true;
+        }
+      });
+    }
+  }
+
+  updateHUD();
+  showToast(`🎉 Selamat datang Presiden ${name}!`);
+  saveGame(true);
+};
+
+document.getElementById('loadSaveBtn').onclick = () => {
+  if (!loadGame()) {
+    showToast('Tidak ada save. Silakan buat negara baru.');
+  }
+};
+
+// Nav buttons
+document.querySelectorAll('.navBtn').forEach(btn => {
+  btn.onclick = () => {
+    const m = btn.dataset.menu;
+    if (m === 'gov') menuGovernment();
+    else if (m === 'fin') menuFinance();
+    else if (m === 'prop') menuProperty();
+    else if (m === 'veh') menuVehicle();
+    else if (m === 'soc') menuSocial();
+    else if (m === 'set') menuSettings();
+  };
+});
+
+// ============ INIT ============
+function init() {
+  initThree();
+  setupInput();
+
+  // Spawn initial NPCs
+  for (let i = 0; i < 20; i++) spawnNPC();
+
+  // Spawn some vehicles
+  spawnVehicle('guard', 15, 20);
+  spawnVehicle('guard', -15, 20);
+
+  // Hide loading
+  setTimeout(() => {
+    document.getElementById('loading').style.display = 'none';
+  }, 800);
+
+  // Try auto-load
+  if (localStorage.getItem('pls_save')) {
+    // don't auto-load, let user choose
+  }
+
+  animate();
+}
+
+// Polyfill CapsuleGeometry for older Three.js
+if (!THREE.CapsuleGeometry) {
+  THREE.CapsuleGeometry = class extends THREE.CylinderGeometry {
+    constructor(r, l, cs, rs) { super(r, r, l + r*2, rs); }
+  };
+}
+
+// Start
+window.addEventListener('load', () => {
+  try {
+    init();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('loading').innerHTML = `<h1>❌ Error</h1><p style="color:#ff6666">${e.message}</p>`;
+  }
+});
+</script>
+</body>
+</html>
