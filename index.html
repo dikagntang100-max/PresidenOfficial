@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="theme-color" content="#0a1420">
 <title>President Life Simulator 3D</title>
 <link rel="stylesheet" href="css/style.css">
@@ -11,17 +11,17 @@
 
 <div id="game"></div>
 
-<!-- ============ LOADING ============ -->
+<!-- LOADING -->
 <div id="loading" class="overlay show">
-  <div class="load-inner">
+  <div>
     <div class="load-logo">🏛️</div>
     <h1>PRESIDENT LIFE SIMULATOR 3D</h1>
     <div class="spinner"></div>
-    <p id="loadText">Memuat dunia...</p>
+    <p id="loadText">Membangun dunia...</p>
   </div>
 </div>
 
-<!-- ============ MAIN MENU ============ -->
+<!-- MAIN MENU -->
 <div id="mainMenu" class="overlay">
   <div class="menu-box">
     <div class="load-logo">🏛️</div>
@@ -29,17 +29,16 @@
     <p class="tagline">Jalani hidup sebagai Presiden. Bangun negaramu.</p>
     <button class="btn-primary" id="btnNewGame">🆕 NEGARA BARU</button>
     <button class="btn-secondary" id="btnContinue">💾 LANJUTKAN</button>
-    <button class="btn-ghost" id="btnSettingsMenu">⚙️ PENGATURAN</button>
     <div class="version">v3.0 • Open World Edition</div>
   </div>
 </div>
 
-<!-- ============ NATION CREATOR ============ -->
+<!-- NATION CREATOR -->
 <div id="nationCreator" class="overlay">
   <div class="creator-box">
     <div class="creator-header">
       <h2>🇺🇳 BUAT NEGARA BARU</h2>
-      <p>Rancang negara Anda sebelum menjadi presiden</p>
+      <p>Rancang identitas negara dan profil presiden Anda</p>
     </div>
     <div class="creator-body">
       <div class="form-section">
@@ -64,14 +63,14 @@
             <option>Demokrasi Liberal</option>
           </select>
         </div>
-        <div class="field"><label>Tingkat Ekonomi Awal</label>
+        <div class="field"><label>Ekonomi Awal</label>
           <select id="c_economy">
             <option value="developing">Berkembang</option>
             <option value="stable" selected>Stabil</option>
             <option value="advanced">Maju</option>
           </select>
         </div>
-        <div class="field"><label>Warna Bendera (3 pita)</label>
+        <div class="field"><label>Warna Bendera</label>
           <div class="flag-colors">
             <input type="color" id="c_flag1" value="#cc0000">
             <input type="color" id="c_flag2" value="#ffffff">
@@ -82,7 +81,7 @@
       <div class="form-section">
         <h3>👔 Profil Presiden</h3>
         <div class="field"><label>Nama Presiden</label><input id="c_president" value="Ir. Soekarno" maxlength="30"></div>
-        <div class="field"><label>Pilih Karakter</label>
+        <div class="field"><label>Karakter</label>
           <div class="char-picker" id="charPicker">
             <div class="char-opt selected" data-skin="#ddb08a" data-body="m">👨🏻 Laki-laki</div>
             <div class="char-opt" data-skin="#c89878" data-body="m">👨🏽 Laki-laki</div>
@@ -98,8 +97,8 @@
             <div class="outfit-opt" data-color="#4a7c59" data-accent="#dddddd">Kunjungan Kerja</div>
           </div>
         </div>
-        <div class="info-note">
-          <b>ℹ️ Catatan:</b> Semua data tersimpan otomatis di perangkat Anda. Anda bisa melanjutkan kapan saja.
+        <div style="background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);border-radius:8px;padding:9px;font-size:10px;color:#8fb8ff;line-height:1.5;margin-top:10px">
+          <b>ℹ️ Info:</b> Semua data tersimpan otomatis. Anda bisa melanjutkan kapan saja.
         </div>
       </div>
     </div>
@@ -110,7 +109,7 @@
   </div>
 </div>
 
-<!-- ============ HUD ============ -->
+<!-- HUD -->
 <div id="hud" class="hud">
   <div class="hud-top">
     <div class="hud-group">
@@ -126,10 +125,8 @@
   </div>
 </div>
 
-<!-- Minimap -->
 <div id="minimapBox"><canvas id="minimap" width="200" height="200"></canvas></div>
 
-<!-- Bottom nav -->
 <div id="bottomNav" class="bottom-nav">
   <button class="nav-btn" data-panel="gov"><span>🏛️</span><small>Pemerintah</small></button>
   <button class="nav-btn" data-panel="econ"><span>💵</span><small>Ekonomi</small></button>
@@ -140,12 +137,10 @@
   <button class="nav-btn" data-panel="settings"><span>⚙️</span><small>Menu</small></button>
 </div>
 
-<!-- Joystick (mobile) -->
 <div id="joystickZone">
   <div id="joystick"><div id="joystickKnob"></div></div>
 </div>
 
-<!-- Action buttons -->
 <div id="actionBar" class="action-bar">
   <button class="act-btn act-run" id="btnRun" title="Lari">🏃</button>
   <button class="act-btn act-interact" id="btnInteract" title="Interaksi">✋</button>
@@ -153,60 +148,13 @@
   <button class="act-btn act-camera" id="btnCamera" title="Kamera">📷</button>
 </div>
 
-<!-- Interaction prompt -->
 <div id="interactPrompt" class="interact-prompt"></div>
-
-<!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- Panel modal -->
 <div id="panelModal" class="panel-modal">
   <div class="panel-content" id="panelContent"></div>
 </div>
 
-<!-- Settings modal -->
-<div id="settingsModal" class="panel-modal">
-  <div class="panel-content">
-    <div class="panel-header">
-      <h2>⚙️ Pengaturan</h2>
-      <button class="close-btn" onclick="UI.closeSettings()">✕</button>
-    </div>
-    <div class="settings-body">
-      <div class="setting-row">
-        <label>Kecepatan Waktu</label>
-        <select id="timeSpeed">
-          <option value="1">Normal (1 menit = 1 menit)</option>
-          <option value="2">Cepat (2x)</option>
-          <option value="5">Sangat Cepat (5x)</option>
-          <option value="20">Kilat (20x)</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <label>Kualitas Grafis</label>
-        <select id="graphicsQuality">
-          <option value="high">Tinggi</option>
-          <option value="medium" selected>Sedang</option>
-          <option value="low">Rendah</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <label>Volume Suara</label>
-        <input type="range" id="volumeSlider" min="0" max="100" value="60">
-      </div>
-      <div class="setting-row">
-        <label>Mode Kamera</label>
-        <select id="cameraMode">
-          <option value="third">Third Person</option>
-          <option value="first">First Person</option>
-        </select>
-      </div>
-      <button class="btn-primary" style="width:100%;margin-top:12px" onclick="Save.saveGame()">💾 Simpan Sekarang</button>
-      <button class="btn-ghost" style="width:100%;margin-top:8px" onclick="if(confirm('Reset semua data?')){localStorage.clear();location.reload();}">🗑️ Reset Semua Data</button>
-    </div>
-  </div>
-</div>
-
-<!-- Scripts (in dependency order) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/world.js"></script>
 <script src="js/character.js"></script>
@@ -221,4 +169,4 @@
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>
-         </html>
+  </html>
