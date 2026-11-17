@@ -1,6 +1,3 @@
-// ============================================================
-// GOVERNMENT SYSTEM
-// ============================================================
 export class Government {
   constructor(GameState) {
     this.state = GameState;
