@@ -1,7 +1,4 @@
-// ============================================================
-// BUILDINGS - Realistic 3D Structures
-// ============================================================
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 export function createPalace(scale = 1) {
   const group = new THREE.Group();
@@ -9,26 +6,21 @@ export function createPalace(scale = 1) {
   const matRoof = new THREE.MeshStandardMaterial({ color: 0x8b6914, roughness: 0.6, metalness: 0.2 });
   const matWindow = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x4466aa, emissiveIntensity: 0.3, transparent: true, opacity: 0.7 });
   const matGold = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 });
-  const matFloor = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5 });
 
-  // Main building
   const main = new THREE.Mesh(new THREE.BoxGeometry(30, 14, 22), matWall);
   main.position.y = 7;
   main.castShadow = true;
   main.receiveShadow = true;
   group.add(main);
 
-  // Roof
   const roof = new THREE.Mesh(new THREE.BoxGeometry(32, 2, 24), matRoof);
   roof.position.y = 15;
   group.add(roof);
 
-  // Dome in center
   const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 24, 16, 0, Math.PI*2, 0, Math.PI/2), matGold);
   dome.position.y = 16;
   group.add(dome);
 
-  // Columns front
   for (let i = -3; i <= 3; i++) {
     const col = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 12, 12), matWall);
     col.position.set(i * 3.5, 6, 11.5);
@@ -36,7 +28,6 @@ export function createPalace(scale = 1) {
     group.add(col);
   }
 
-  // Windows
   for (let row = 0; row < 2; row++) {
     for (let col = -4; col <= 4; col++) {
       const win = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 0.1), matWindow);
@@ -45,7 +36,6 @@ export function createPalace(scale = 1) {
     }
   }
 
-  // Front stairs
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
   for (let i = 0; i < 6; i++) {
     const step = new THREE.Mesh(new THREE.BoxGeometry(20, 0.3, 1), stepMat);
@@ -53,14 +43,11 @@ export function createPalace(scale = 1) {
     group.add(step);
   }
 
-  // Flag on top
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 8, 8), matGold);
   pole.position.set(0, 20, 0);
   group.add(pole);
 
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshStandardMaterial({ 
-    color: 0xe63946, side: THREE.DoubleSide 
-  }));
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshStandardMaterial({ color: 0xe63946, side: THREE.DoubleSide }));
   flag.position.set(1.6, 22, 0);
   group.add(flag);
 
@@ -74,41 +61,34 @@ export function createMosque() {
   const matGold = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 });
   const matWindow = new THREE.MeshStandardMaterial({ color: 0x88ddff, transparent: true, opacity: 0.6 });
 
-  // Base
   const base = new THREE.Mesh(new THREE.BoxGeometry(20, 10, 20), matWall);
   base.position.y = 5;
   base.castShadow = true;
   base.receiveShadow = true;
   group.add(base);
 
-  // Main dome
   const dome = new THREE.Mesh(new THREE.SphereGeometry(6, 32, 20, 0, Math.PI*2, 0, Math.PI/2), matDome);
   dome.position.y = 12;
   dome.castShadow = true;
   group.add(dome);
 
-  // Dome top crescent
   const crescentBase = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.5, 8), matGold);
   crescentBase.position.y = 18.5;
   group.add(crescentBase);
 
-  // Minarets (4)
   for (const [x, z] of [[-11, -11], [11, -11], [-11, 11], [11, 11]]) {
     const tower = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.3, 22, 12), matWall);
     tower.position.set(x, 11, z);
     tower.castShadow = true;
     group.add(tower);
-    
     const towerTop = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 8), matDome);
     towerTop.position.set(x, 22.5, z);
     group.add(towerTop);
-    
     const spire = new THREE.Mesh(new THREE.ConeGeometry(0.15, 2, 8), matGold);
     spire.position.set(x, 24.5, z);
     group.add(spire);
   }
 
-  // Entrance arches
   const archMat = new THREE.MeshStandardMaterial({ color: 0xddddcc });
   for (const x of [-6, 0, 6]) {
     const arch = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 0.5), archMat);
@@ -116,13 +96,11 @@ export function createMosque() {
     group.add(arch);
   }
 
-  // Windows
   for (const x of [-7, -3, 3, 7]) {
     const win = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 0.2), matWindow);
     win.position.set(x, 6, 10.1);
     group.add(win);
   }
-
   return group;
 }
 
@@ -132,14 +110,12 @@ export function createHospital() {
   const matWindow = new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.7, emissive: 0x4466aa, emissiveIntensity: 0.2 });
   const matRed = new THREE.MeshStandardMaterial({ color: 0xff2222 });
 
-  // Main tower
   const main = new THREE.Mesh(new THREE.BoxGeometry(20, 30, 20), matWall);
   main.position.y = 15;
   main.castShadow = true;
   main.receiveShadow = true;
   group.add(main);
 
-  // Windows in grid
   for (let y = 4; y < 30; y += 3) {
     for (let x = -8; x <= 8; x += 3) {
       const w = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.1), matWindow);
@@ -148,14 +124,12 @@ export function createHospital() {
     }
   }
 
-  // Red Cross
   const cross1 = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 0.3), matRed);
   cross1.position.set(0, 27, 10.2);
   group.add(cross1);
   const cross2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4, 0.3), matRed);
   cross2.position.set(0, 27, 10.2);
   group.add(cross2);
-
   return group;
 }
 
@@ -183,17 +157,13 @@ export function createSchool() {
       group.add(w);
     }
   }
-
   return group;
 }
 
 export function createSkyscraper(width = 15, height = 60, color = 0x667788) {
   const group = new THREE.Group();
   const matWall = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.3 });
-  const matWin = new THREE.MeshStandardMaterial({ 
-    color: 0x88ccff, emissive: 0x224488, emissiveIntensity: 0.3, 
-    transparent: true, opacity: 0.8 
-  });
+  const matWin = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x224488, emissiveIntensity: 0.3, transparent: true, opacity: 0.8 });
 
   const body = new THREE.Mesh(new THREE.BoxGeometry(width, height, width), matWall);
   body.position.y = height / 2;
@@ -201,7 +171,6 @@ export function createSkyscraper(width = 15, height = 60, color = 0x667788) {
   body.receiveShadow = true;
   group.add(body);
 
-  // Windows grid
   const rows = Math.floor(height / 3);
   const cols = Math.floor(width / 2);
   for (let r = 0; r < rows; r++) {
@@ -211,7 +180,6 @@ export function createSkyscraper(width = 15, height = 60, color = 0x667788) {
       group.add(w);
     }
   }
-
   return group;
 }
 
@@ -242,7 +210,6 @@ export function createHouse(color = 0xe8d8b8) {
     win.position.set(x, 2.5, 3.05);
     group.add(win);
   }
-
   return group;
 }
 
@@ -255,11 +222,9 @@ export function createRoad(width = 8, length = 100) {
   road.receiveShadow = true;
   group.add(road);
 
-  // Center line
   const line = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.11, length * 0.9), matLine);
   line.position.y = 0.01;
   group.add(line);
-
   return group;
 }
 
@@ -279,7 +244,6 @@ export function createTree() {
     leaf.castShadow = true;
     group.add(leaf);
   }
-
   return group;
 }
 
@@ -300,6 +264,5 @@ export function createStreetlight() {
   lamp.position.set(1.4, 6, 0);
   group.add(lamp);
   group.userData.lamp = lamp;
-
   return group;
-}
+    }
