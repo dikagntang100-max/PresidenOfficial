@@ -1,7 +1,4 @@
-// ============================================================
-// VEHICLES - Realistic 3D Vehicles with Wheels & Doors
-// ============================================================
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 class Vehicle {
   constructor(scene, type, position) {
@@ -41,35 +38,29 @@ class Vehicle {
   buildCar(bodyColor, height, length, name, accentColor) {
     this.name = name;
     this.maxSpeed = 22;
-
     const matBody = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.6, roughness: 0.3 });
     const matGlass = new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.5, metalness: 0.9, roughness: 0.1 });
     const matWheel = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
     const matRim = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.2 });
     const matLightF = new THREE.MeshStandardMaterial({ color: 0xffeecc, emissive: 0xffeecc, emissiveIntensity: 0.4 });
     const matLightR = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff2222, emissiveIntensity: 0.4 });
-
     const width = 1.9;
 
-    // Body
     const body = new THREE.Mesh(new THREE.BoxGeometry(width, height * 0.5, length), matBody);
     body.position.y = height * 0.55;
     body.castShadow = true;
     this.group.add(body);
 
-    // Cabin
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(width * 0.9, height * 0.6, length * 0.5), matBody);
     cabin.position.set(0, height * 0.55 + height * 0.45, 0.2);
     cabin.castShadow = true;
     this.group.add(cabin);
 
-    // Windshield
     const shield = new THREE.Mesh(new THREE.BoxGeometry(width * 0.85, height * 0.55, 0.05), matGlass);
     shield.position.set(0, height * 0.55 + height * 0.4, length * 0.5 * 0.35 + 0.2);
     shield.rotation.x = -0.2;
     this.group.add(shield);
 
-    // Side windows
     const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.03, height * 0.5, length * 0.45), matGlass);
     sideL.position.set(-width/2 + 0.02, height * 0.55 + height * 0.4, 0.2);
     this.group.add(sideL);
@@ -77,7 +68,6 @@ class Vehicle {
     sideR.position.x = width/2 - 0.02;
     this.group.add(sideR);
 
-    // Headlights
     const headL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.05), matLightF);
     headL.position.set(-width/2 + 0.25, height * 0.6, -length/2);
     this.group.add(headL);
@@ -85,7 +75,6 @@ class Vehicle {
     headR.position.x = width/2 - 0.25;
     this.group.add(headR);
 
-    // Tail lights
     const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.05), matLightR);
     tailL.position.set(-width/2 + 0.25, height * 0.6, length/2);
     this.group.add(tailL);
@@ -93,7 +82,6 @@ class Vehicle {
     tailR.position.x = width/2 - 0.25;
     this.group.add(tailR);
 
-    // Wheels
     const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
     const rimGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.26, 8);
     const wheelPositions = [
@@ -115,14 +103,12 @@ class Vehicle {
       this.group.add(rim);
     }
 
-    // Accent stripe
     if (accentColor) {
       const matAccent = new THREE.MeshStandardMaterial({ color: accentColor });
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(width + 0.02, 0.1, length * 0.8), matAccent);
       stripe.position.set(0, height * 0.7, 0);
       this.group.add(stripe);
     }
-
     this.addDriverSpot();
   }
 
@@ -268,7 +254,6 @@ class Vehicle {
     const cockpit = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 10), matGlass);
     cockpit.position.set(0, 3, 5.5);
     this.group.add(cockpit);
-
     this.isAir = true;
   }
 
@@ -295,38 +280,25 @@ class Vehicle {
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 3), matDeck);
     cabin.position.set(0, 3, -2);
     this.group.add(cabin);
-
     this.isWater = true;
   }
 
   addDriverSpot() {
-    // Invisible driver seat reference
     this.driverSeat = new THREE.Vector3(0, 1.5, 0);
   }
 
   update(delta, player) {
-    // Wheel rotation if moving
-    if (this.driver === 'player') {
-      // Controlled by player input via main
-    }
-    // Wheels spin
     if (Math.abs(this.speed) > 0.1) {
-      for (const w of this.wheels) {
-        w.rotation.x += this.speed * delta * 2;
-      }
+      for (const w of this.wheels) w.rotation.x += this.speed * delta * 2;
     }
-    // Rotor
     if (this.rotor) this.rotor.rotation.y += delta * 20;
     if (this.tailRotor) this.tailRotor.rotation.x += delta * 30;
 
-    // Apply movement
     if (this.speed !== 0) {
       this.group.position.x += Math.sin(this.rotation) * this.speed * delta;
       this.group.position.z += Math.cos(this.rotation) * this.speed * delta;
-      // friction
       this.speed *= 0.98;
     }
-
     this.group.rotation.y = this.rotation;
   }
 
@@ -334,14 +306,10 @@ class Vehicle {
     this.speed += accel * delta * 20;
     this.speed = Math.max(-this.maxSpeed * 0.5, Math.min(this.maxSpeed, this.speed));
     this.rotation += turn * delta * 2 * (this.speed > 0 ? 1 : -1);
-    // auto slow if no accel
     if (accel === 0) this.speed *= 0.95;
   }
 }
 
-// ============================================================
-// VEHICLE MANAGER
-// ============================================================
 export class VehicleManager {
   constructor(scene, world) {
     this.scene = scene;
@@ -378,11 +346,7 @@ export class VehicleManager {
   }
 
   update(delta, player) {
-    for (const v of this.vehicles) {
-      v.update(delta, player);
-    }
-
-    // Player controls current vehicle
+    for (const v of this.vehicles) v.update(delta, player);
     if (player.isDriving && player.currentVehicle) {
       const v = player.currentVehicle;
       const keys = window._keys || {};
@@ -395,4 +359,4 @@ export class VehicleManager {
       v.setControl(accel, turn, delta);
     }
   }
-    }
+      }
