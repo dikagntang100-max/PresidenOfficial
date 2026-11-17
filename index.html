@@ -5,18 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>President Life Simulator 3D</title>
 <link rel="stylesheet" href="style.css">
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
 </head>
 <body>
 
-<!-- ============ MAIN MENU ============ -->
 <div id="main-menu" class="screen active">
   <div class="menu-bg"></div>
   <div class="menu-content">
@@ -31,7 +22,6 @@
   </div>
 </div>
 
-<!-- ============ COUNTRY CREATION ============ -->
 <div id="country-creation" class="screen">
   <div class="creation-panel">
     <h2>🏛 PEMBUATAN NEGARA</h2>
@@ -42,10 +32,8 @@
         <h3>Data Negara</h3>
         <label>Nama Negara</label>
         <input id="in-country-name" type="text" value="Nusantara Raya" maxlength="20">
-        
         <label>Nama Ibu Kota</label>
         <input id="in-capital" type="text" value="Kartika Utama" maxlength="20">
-        
         <label>Mata Uang</label>
         <select id="in-currency">
           <option value="IDR">Rupiah (IDR)</option>
@@ -53,24 +41,20 @@
           <option value="EUR">Euro (EUR)</option>
           <option value="MYR">Ringgit (MYR)</option>
         </select>
-        
         <label>Bahasa Negara</label>
         <select id="in-language">
           <option value="Indonesia">Indonesia</option>
           <option value="English">English</option>
           <option value="Melayu">Melayu</option>
         </select>
-        
         <label>Sistem Pemerintahan</label>
         <select id="in-system">
           <option value="Republik Presidensial">Republik Presidensial</option>
           <option value="Republik Parlementer">Republik Parlementer</option>
           <option value="Monarki Konstitusional">Monarki Konstitusional</option>
         </select>
-        
         <label>Populasi Awal</label>
         <input id="in-population" type="number" value="500000" min="10000" max="10000000" step="1000">
-        
         <label>Tingkat Ekonomi Awal</label>
         <select id="in-economy">
           <option value="Berkembang">Berkembang</option>
@@ -83,7 +67,6 @@
         <h3>Data Presiden</h3>
         <label>Nama Presiden</label>
         <input id="in-president-name" type="text" value="Ir. Bima Sakti" maxlength="20">
-        
         <label>Karakter Presiden</label>
         <div class="char-options">
           <div class="char-option active" data-char="male_suit">
@@ -95,7 +78,6 @@
             <span>Wanita Formal</span>
           </div>
         </div>
-
         <label>Pakaian</label>
         <select id="in-outfit">
           <option value="suit_black">Jas Hitam Presidensial</option>
@@ -103,7 +85,6 @@
           <option value="casual">Pakaian Santai</option>
           <option value="kunjungan">Pakaian Kunjungan Kerja</option>
         </select>
-
         <label>Warna Bendera</label>
         <div class="flag-colors">
           <input type="color" id="in-flag1" value="#e63946">
@@ -120,7 +101,6 @@
   </div>
 </div>
 
-<!-- ============ LOADING SCREEN ============ -->
 <div id="loading-screen" class="screen">
   <div class="loading-content">
     <h1>MEMUAT DUNIA...</h1>
@@ -129,11 +109,9 @@
   </div>
 </div>
 
-<!-- ============ GAME SCREEN ============ -->
 <div id="game-screen" class="screen">
   <canvas id="game-canvas"></canvas>
 
-  <!-- HUD -->
   <div id="hud">
     <div id="hud-top">
       <div class="hud-panel">
@@ -171,14 +149,13 @@
     </div>
 
     <div id="speed-control">
-      <label>Kecepatan Waktu:</label>
+      <label>Waktu:</label>
       <button class="speed-btn active" data-speed="1">1x</button>
       <button class="speed-btn" data-speed="60">60x</button>
       <button class="speed-btn" data-speed="600">600x</button>
     </div>
   </div>
 
-  <!-- MOBILE CONTROLS -->
   <div id="mobile-controls">
     <div id="joystick-zone">
       <div id="joystick-base"><div id="joystick-knob"></div></div>
@@ -190,18 +167,15 @@
     </div>
   </div>
 
-  <!-- DESKTOP HINT -->
   <div id="desktop-hint">
     <span>WASD: Bergerak · Shift: Lari · E: Interaksi · F: Kendaraan · C: Kamera · Mouse: Lihat</span>
   </div>
 </div>
 
-<!-- ============ MODALS ============ -->
 <div id="modal-overlay" class="hidden">
   <div id="modal-content"></div>
 </div>
 
-<!-- ============ SETTINGS MODAL ============ -->
 <div id="settings-modal" class="screen">
   <div class="modal-box">
     <h2>⚙ Pengaturan</h2>
@@ -237,4 +211,4 @@
 
 <script type="module" src="js/main.js"></script>
 </body>
-</html>
+                                                 </html>
